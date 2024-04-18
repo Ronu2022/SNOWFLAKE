@@ -1,0 +1,339 @@
+CREATE DATABASE RM_JOINS;
+USE DATABASE RM_JOINS;
+
+/* The inner join is one of the most commonly used join statement in SQL Server. 
+A join lets us combine results from two or more tables into a single result set. 
+It includes only those results which are common to both the tables. 
+
+Syntax
+The following is the syntax of inner join.
+ 
+SELECT <Columns> 
+FROM tableA 
+INNER JOIN tableB
+ON (join_condition)
+
+The join_condition defines the condition on which the tables are joined. 
+This condition is evaluated for each row of the result. 
+If the condition is evaluated to true, then the rows are joined and added to the result set.
+
+If the conditions do not match, then the rows are ignored and not added to the result set
+
+The word INNER is not necessary as it is the default. 
+
+Hence the following statement is the same as the above 
+
+Sample database
+Consider the following tables from the table reservation system of a restaurant
+
+CustomerType : Customers are defined as VIP / Regular
+Customers List of customers with Customer Type.
+Tables The list of tables available in the restaurant. CustomerID field indicates that the customer has reserved the table.
+Orders : The orders placed by the customer
+DiscVoucher The discounts are offered based on the total value of the order
+*/
+
+
+create or replace table customerType 
+(
+ CustomerTypeID int primary key, 
+ Name varchar(10)
+);
+ 
+insert into customerType values (1,'VIP');
+insert into customerType values (2,'Regular');
+ 
+ 
+create or replace table Customers 
+(
+   CustomerID int primary key,
+   Name varchar(100),
+   CustomerTypeID int null,
+   CONSTRAINT FK_Customers_CustomerTypeID FOREIGN KEY (CustomerTypeID) REFERENCES customerType (CustomerTypeID)
+);
+
+
+ 
+insert into Customers values(1, 'Kevin Costner',1);
+insert into Customers values(2, 'Akshay Kumar',2);
+insert into Customers values(3, 'Sean Connery',1);
+insert into Customers values(4, 'Sanjay Dutt',2);
+insert into Customers values(5, 'Sharukh Khan',null);
+ 
+ 
+create Or replace table Tables 
+(
+   TableNo int primary key,
+   CustomerID int null,
+   CONSTRAINT FK_Tables_CustomerID FOREIGN KEY (CustomerID) REFERENCES Customers (CustomerID)
+);
+ 
+insert into Tables values(1, null);
+insert into Tables values(2, 1);
+insert into Tables values(3, 2);
+insert into Tables values(4, 5);
+insert into Tables values(5, null);
+ 
+ 
+create or replace table Orders 
+(
+   OrderNo int primary key,
+   OrderDate datetime,
+   CustomerID int null,
+   Amount decimal(10,2),
+   CONSTRAINT FK_Orders_CustomerID FOREIGN KEY (CustomerID) REFERENCES Customers (CustomerID)
+);
+ 
+insert into Orders Values(1,'2019-12-10',1,5000);
+insert into Orders Values(2,'2019-12-09',1,3000);
+insert into Orders Values(3,'2019-12-10',2,7000);
+insert into Orders Values(4,'2019-12-01',2,7000);
+insert into Orders Values(5,'2019-12-10',3,1000);
+insert into Orders Values(6,'2019-12-03',3,1000);
+insert into Orders Values(7,'2019-12-10',4,3000);
+insert into Orders Values(8,'2019-12-10',2,4000);
+ 
+create or replace table DiscVoucher (
+   FromAmount decimal(10,0) ,
+   UptoAmount decimal(10,0) ,
+   Discount decimal(10,0)
+);
+ 
+insert into DiscVoucher Values(0,3000,0);
+insert into DiscVoucher Values(3001,8000,10);
+insert into DiscVoucher Values(8001,99999,25) ;
+
+SELECT * FROM customerType;
+select * from Customers;
+select * from Tables;
+select * from Orders;
+select * from DiscVoucher;
+
+---------------------------------------------------------------------------------------------------------
+
+
+
+-- Query
+-- As said earlier, the inner join returns the rows which have related rows in the joined table. 
+-- Rows that do not have any relation to the other table are left out.
+-- The following query returns the list of customers who have reserved a table.
+
+Select C.CustomerID,C.Name, T.TableNo
+From Customers C
+join Tables T on C.CustomerID=T.CustomerID;
+
+-- You can also make use of where clause instead of join clause as shown below. 
+-- Snowflake /sql server is smart enough to do an inner join.
+
+select C.CustomerID,C.Name,T.TableNo
+From Customers C ,Tables T Where C.CustomerID=T.CustomerID;
+
+
+-- Inner join 3 or more tables
+-- You can join more than 3 tables in an join. 
+-- The syntax is as shown below. 
+-- You can also mix other types of joins.
+-- snowflake/sql server allows joining data from up to 256 tables.
+
+/* SELECT <Columns> 
+FROM first_table 
+INNER JOIN second_table 
+ON (join_condition)
+INNER JOIN third_table 
+ON (join_condition)
+INNER JOIN fourth_table 
+ON (join_condition) */
+
+
+/* GET RESERVED TABLE WITH CUSTOMER NAME AND CUSTOMER TYPE*/
+
+select c1.CustomerID,c1.Name,c2.Name, t.TableNo from  customers c1
+join customertype c2 on c1.customertypeID = c2.customertypeID
+join tables t on c1.customerid = t.customerid; 
+
+
+
+SELECT * FROM customerType;
+select * from Customers;
+select * from Tables;
+select * from Orders;
+select * from DiscVoucher;
+
+
+
+-- Analysis:
+-- The interesting thing about the result is that CustomerID 5 (Sharukh Khan) does not appear in the result although he as reserved a table.
+-- The Customers & tables have three matching rows. 
+-- Hence the first inner join returns three rows. 
+-- The result is joined with the CustomerType table. 
+-- Customer with ID 5 does not have Customer Type, hence it is discarded and only two rows are returned.
+
+/* Subquery in a Join
+Instead of a table, you can make use of a subquery.
+
+We have the Orders table in our sample database.
+it contains the date of order, customerID and amount of Order. */
+
+
+/*FIND TOTAL ORDER PLACED BY EACH CUSTOMER. */
+
+
+---------------------------------------------------------------------------------------------------------
+-- FIND TOTAL ORDER PLACED BY EACH CUSTOMER. 
+---------------------------------------------------------------------------------------------------------
+-- My code:
+
+
+SELECT * FROM customerType;
+select * from Customers;
+select * from Tables;
+select * from Orders;
+select * from DiscVoucher;
+
+select CustomerID, Name, SUM(Amount) as Total_revenue,Customer_type  FROM 
+(
+select c.CustomerID,c.Name ,o.OrderNo,o.Amount,c1.Name AS Customer_type FROM Customers c
+JOIN Orders o ON c.CustomerID = o.CustomerID 
+JOIN customerType c1 ON c.CustomerTypeID = c1.CustomerTypeID
+) AS ALias_table
+GROUP BY CustomerID,Name,Customer_type
+ORDER BY Total_revenue DESC; 
+
+-- Anand's Code
+select cu.Name, ord.total_amount from customers cu join 
+(
+select customerid, SUM(amount) as total_amount from orders group by customerid
+) ord on cu.customerid = ord.customerid order by Total_amount DESC;
+
+
+
+-- Lets say in the above code we want customer type as well
+
+select cu.Name, ord.total_amount, ty.Name from customers cu 
+join 
+(
+select customerid, SUM(amount) as total_amount from orders 
+group by customerid
+) ord on cu.customerid = ord.customerid 
+Join customertype ty ON cu.customertypeid = ty.customertypeid
+order by total_amount DESC;
+
+
+
+
+
+
+
+
+
+
+
+
+--Multiple Conditions in Join
+--You can use more than one condition in the join condition. 
+--The following query joins the customer table with the order table using both the CustomerId and OrderDate column.
+
+
+
+
+
+
+
+SELECT * FROM customerType;
+select * from Customers;
+select * from Tables;
+select * from Orders;
+select * from DiscVoucher;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+create table Source
+(
+ id INT, 
+ Name Varchar(1)
+ ); 
+ 
+ create table Target
+ (
+  id INT,
+  Name varchar(1)
+  ); 
+ 
+ INSERT INTO Source(id,Name) Values
+ (1,'A'),
+ (2,'B'),
+ (3,'C'),
+ (4,'D');
+ 
+ SELECT * FROM Source; 
+ 
+  INSERT INTO Target(id,Name) Values
+ (1,'A'),
+ (2,'B'),
+ (4,'X'),
+ (5,'F');
+ 
+  SELECT * FROM Source; 
+  SELECT * FROM Target; 
+
+
+select su.*,ta.*, from Source su 
+full outer join Target ta  ON su.id = ta.id; -- this gives all record
+
+
+select su.*,ta.*, from Source su 
+full outer join Target ta  ON su.id = ta.id
+where su.Name != ta.Name;  -- beacuse we don't want all records where name is same. 
+-- Null is not comparable with Null or any value there fore only one row comes up.
+
+
+select su.*,ta.*, from Source su 
+full outer join Target ta  ON su.id = ta.id
+where su.Name != ta.Name OR su.Name is NULL OR ta.Name IS NULL;
+
+-- if you see the id that we need 5 is in a separate column.
+-- so we would need a command called coalesce
+
+
+select coalesce(su.id,ta.id) as ID,su.*,ta.*, from Source su 
+full outer join Target ta  ON su.id = ta.id
+where su.Name != ta.Name OR su.Name is NULL OR ta.Name IS NULL;
+
+SELECT ID, COMMENT
+FROM
+(
+    select coalesce(su.id,ta.id) as ID,su.name, ta.name,
+    CASE 
+    WHEN ta.Name iS NULL THEN 'New in Source'
+    WHEN su.Name is NULL THEN 'New in Target'
+    ELSE 'Mismatch'
+    END AS Comment
+    from Source su 
+    full outer join Target ta  ON su.id = ta.id
+    where su.Name != ta.Name OR su.Name is NULL OR ta.Name IS NULL
+    
+) AS alias_table 
