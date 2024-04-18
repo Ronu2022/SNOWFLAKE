@@ -1,0 +1,66 @@
+CREATE DATABASE september_2nd; 
+USE september_2nd;
+
+CREATE SCHEMA sequence_sample; 
+USE SCHEMA sequence_sample;
+
+
+CREATE SCHEMA identity_sample; 
+USE SCHEMA identity_sample;
+
+CREATE OR REPLACE TABLE employees
+(
+  row_number INT IDENTITY(100,1), -- Starts with 100 with increment of 1
+  employee_id INT,
+  salary NUMBER,
+  age INT
+);
+
+INSERT INTO  employees(employee_id,salary,age) VALUES
+(124,20000,21),
+(128,30000,26),
+(222,40000,28);
+
+SELECT * FROM employees;
+
+
+ALTER TABLE employees ADD
+-----------------------------------------------------------------------------------------------
+
+CREATE SCHEMA auto_increment_sample;
+USE SCHEMA auto_increment_sample;
+
+CREATE OR REPLACE TABLE employees
+(
+  row_number INT autoincrement START 100 INCREMENT 10,
+  employee_id NUMBER,
+  salary NUMBER,
+  age NUMBER
+); 
+
+INSERT INTO employees(employee_id,salary,age) VALUES 
+(121,20000,21),
+(122,30000,22),
+(124,40000,24);
+
+SELECT * FROM employees; 
+
+
+-- You canalso add a column with  an existing table and do increment
+
+ALTER TABLE employees ADD COLUMN identity_add INT;
+
+CREATE OR REPLACE SEQUENCE seq_id
+START = 1 INCREMENT = 2;
+
+UPDATE employees 
+SET identity_add = seq_id.nextval; 
+
+SELECT * FROM employees;
+
+
+
+
+-----------------------------------------------------------------------------------------------'
+
+
