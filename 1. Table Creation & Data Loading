@@ -1,0 +1,62 @@
+use database rm_compute_public_demo_database;
+CREATE SCHEMA IF NOT EXISTS DB_DWH;
+CREATE SCHEMA IF NOT EXISTS DB_REPORTING; 
+CREATE SCHEMA IF NOT EXISTS DB_SOURCE; 
+
+
+CREATE DATABASE retails; 
+drop database retails; 
+
+CREATE DATABASE rm_compute_public_retails; 
+USE DATABASE rm_compute_public_retails;
+
+
+
+CREATE OR REPLACE TABLE demographic_RAW
+(
+  AGE_DESC CHAR(20),
+  MARITAL_SATUS_CODE CHAR(5),
+  INCOME_DESC VARCHAR(40),
+  HOMEOWNER_DESC VARCHAR(40),
+  HH_COMP_DESC VARCHAR(50),
+  HOUSEHOLD_SIZE_DESC VARCHAR(50),
+  KID_CATEGORY_DESC VARCHAR(40),
+  household_key INT PRIMARY KEY
+);
+
+
+SELECT * FROM demographic_raw; 
+-- Select gives all the rows from all columns.
+
+SELECT COUNT(*) FROM demographic_raw; -- gives total number of records
+
+SELECT * FROM demographic_raw ORDER BY MARITAL_SATUS_CODE;
+
+
+SELECT AGE_DESC,MARITAL_SATUS_CODE,INCOME_DESC,HOUSEHOLD_SIZE_DESC
+FROM demographic_raw ORDER BY 1,2; -- whenever number of colums is big, use Numbers instead of names.
+
+/* ORDER OF EXECUTION */
+
+-- FROM
+-- WHERE
+-- SELECT
+-- ORDER BY
+
+
+SELECT * FROM demographic_raw WHERE INCOME_DESC = '250K+';
+
+
+
+SELECT AGE_DESC,MARITAL_SATUS_CODE,INCOME_DESC,HOUSEHOLD_SIZE_DESC
+FROM demographic_raw ORDER BY 1,2; 
+-- after orderby if you don't define it will be by default ascending
+
+SELECT AGE_DESC,MARITAL_SATUS_CODE,INCOME_DESC,HOUSEHOLD_SIZE_DESC
+FROM demographic_raw ORDER BY 1,2 DESC; 
+-- 1 -> Ascending
+-- 2 -> Descending
+
+SELECT AGE_DESC,MARITAL_SATUS_CODE,INCOME_DESC,HOUSEHOLD_SIZE_DESC
+FROM demographic_raw ORDER BY 1 DESC,2 ASC; 
+
