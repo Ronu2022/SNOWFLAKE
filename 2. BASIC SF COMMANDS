@@ -1,0 +1,141 @@
+USE RM_COMPUTE_PUBLIC_DEMO_DATABASE;
+
+CREATE OR REPLACE TABLE customers
+(
+  customer_id NUMBER(10) NOT NULL,
+  customer_name VARCHAR(50) NOT NULL,
+  city VARCHAR(50),
+  PRIMARY KEY (customer_id)
+);
+
+INSERT INTO customers VALUES
+(1,'Anand Jha','Bengaluru'),
+(2,'Anish','Bengaluru'),
+(3,'Ramesh','Delhi');
+
+
+SELECT * FROM customers; 
+
+INSERT INTO customers VALUES
+(4,'Raju',''); -- to insert blank values
+
+SELECT * FROM customers; 
+
+
+INSERT INTO customers(customer_id,customer_name) VALUES
+(5,'Ajay'); -- Look: NULL got inserted in place of city.
+-- NULL is different from BLANK
+
+SELECT * FROM customers; 
+
+SELECT * FROM customers WHERE city IS NULL; -- Checks for NULL
+SELECT * FROM customers WHERE city = ''; -- Checks for empty
+
+
+INSERT INTO customers(customer_id,customer_name)
+VALUES (6,'Ronu'),
+(7,'Jeniffer'),
+(8,'Roshni');
+
+INSERT INTO customers(customer_id,customer_name,city) VALUES
+(9,'Damodar','');
+
+SELECT * FROM customers; 
+
+
+SELECT COUNT(*) FROM customers;  -- 9 -> counts the total rows irrespective of NULL or Blank
+
+SELECT COUNT(DISTINCT(city)) FROM customers;  -- 3
+
+SELECT * FROM customers;
+SELECT COUNT(city) FROM customers; -- 5
+
+
+SELECT * FROM customers ORDER BY city; 
+
+SELECT * FROM customers ORDER BY city DESC;
+
+
+SELECT * FROM customers; 
+
+SELECT DISTINCT(city) FROM customers; -- Bengaluru,Delhi, Blank, Null
+
+SELECT UNIQUE(city) FROM customers;
+
+
+CREATE OR REPLACE TABLE customers2 LIKE customers; -- this copies the skeleton only
+
+SELECT * FROM customers2;
+
+INSERT INTO customers2(customer_id,customer_name,city) 
+SELECT * FROM customers; -- copying all the contents from a table and inserting it to the other.
+
+
+CREATE OR REPLACE TABLE customers3 CLONE customers; -- This wouldnt require insert
+-- clone copies structure and values.
+SELECT * FROM customers;
+
+CREATE OR REPLACE TABLE customer4 AS
+SELECT customer_id,city FROM customers;  -- Copies frame and content
+
+CREATE OR REPLACE TABLE customers5 AS
+SELECT * FROM customers;
+
+SELECT * FROM customers;
+
+
+
+
+
+DESCRIBE TABLE customers;  -- Metadata with no column_name
+
+SHOW COLUMNS IN customers; -- Metadata also with schema_name
+
+
+
+SHOW USERS;
+SELECT CURRENT_USER();
+
+SHOW ROLES;
+SELECT CURRENT_ROLE();
+
+SHOW WAREHOUSES;
+SELECT CURRENT_WAREHOUSE();
+USE WAREHOUSE compute_wh;
+ALTER WAREHOUSE IF EXISTS compute_wh SET AUTO_SUSPEND = 3600; -- Don't RUN only for learning SF
+
+SHOW DATABASES;
+SELECT CURRENT_DATABASE(); 
+USE DATABASE RM_COMPUTE_PUBLIC_DEMO_DATABASE;
+
+SELECT * FROM INFORMATION_SCHEMA.DATABASES; -- Gives information about all the databases
+-- all databases under your role here: accountadmin.
+
+
+SHOW ROLES;
+
+SHOW GRANTS TO ROLE role_name;
+GRANT privilege_name ON WAREHOUSE warehouse_name TO ROLE role_name;
+GRANT privilege_name ON DATABASE  database_name TO ROLE role_name; 
+GRANT privilege_name ON TABLE table_name TO ROLE role_name;
+
+
+
+SELECT * FROM RM_COMPUTE_PUBLIC_RETAILS.PUBLIC.DEMOGRAPHIC_RAW;
+
+SELECT * FROM RM_COMPUTE_PUBLIC_RETAILS.PUBLIC.DEMOGRAPHIC_RAW limit 1000; 
+-- Limit in SF : random 1000 records unlike in MYSQL where it gives top 1000.
+
+SELECT TOP 100 * FROM RM_COMPUTE_PUBLIC_RETAILS.PUBLIC.DEMOGRAPHIC_RAW;
+-- IN SF it is TOP which gives the top n records.
+
+
+
+
+select top 100 * from 
+
+ 
+
+
+
+
