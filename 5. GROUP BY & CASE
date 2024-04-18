@@ -1,0 +1,55 @@
+ USE DATABASE RM_COMPUTE_PUBLIC_RETAILS;
+
+SELECT * FROM DEMOGRAPHIC_RAW;
+
+SELECT INCOME_DESC,COUNT(*) AS total_count FROM DEMOGRAPHIC_RAW
+GROUP BY INCOME_DESC
+ORDER BY TOTAL_COUNT DESC;
+
+
+SELECT * FROM BIKESTORES.SALES.ORDER_ITEMS;
+
+SELECT product_id, sum(quantity)AS total_quantity, 
+SUM(list_price) AS total_revenue FROM BIKESTORES.SALES.ORDER_ITEMS
+GROUP BY product_id
+ORDER BY 1 ASC,2 DESC; -- Though  2 DESC mentioned but, it is not reelevant wrt the results. 
+
+SELECT product_id, sum(quantity)AS total_quantity, 
+SUM(list_price) AS total_revenue FROM BIKESTORES.SALES.ORDER_ITEMS
+GROUP BY product_id
+HAVING (product_id > 5 AND total_quantity >100) -- This variation is also Possible with Having
+ORDER BY 1 ASC,2 DESC;
+
+
+-- CASE STATEMENTS
+
+SELECT * FROM BIKESTORES.SALES.ORDER_ITEMS;
+
+SELECT product_id, list_price, discount,
+CASE
+  WHEN discount <= 0.10 THEN 'Low'
+  WHEN discount > 0.10 AND discount <= 0.20 THEN 'Mid'
+  ELSE 'Classification Pending'
+END discount_type
+FROM BIKESTORES.SALES.ORDER_ITEMS
+ORDER BY product_id; 
+
+
+-- VARIATION OF CASE
+
+COUNT(CASE 
+        WHEN PAY_IN_METHOD IN ('NEFT','CARDs', 'UPI')  THEN 1 -- 1 is a placeholder, if true 1 else 
+                                                             -- else returns NULL
+      END) AS NON_CASH_COUNT 
+-- Don't Run
+-- 1 is a placeholder, if true 1 else Returns Null
+-- Here counts the tototal nuber of records when the conditions meet.
+-- In SQL, when using the  CASE expression within a COUNT function.
+-- You can give an alias to the result of the CASE expression directly after the END
+
+
+
+
+
+
+
