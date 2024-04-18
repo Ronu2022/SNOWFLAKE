@@ -1,0 +1,148 @@
+CREATE DATABASE RM_WINDOWFUNC;
+USE DATABASE RM_WINDOWFUNC;
+
+
+CREATE OR REPLACE TABLE TOP_SCORERS AS -- Let's insert through UNION ALL
+
+SELECT
+ 'James Harden' AS player,
+ 2335 AS points,
+ 2020 AS season
+UNION ALL
+(SELECT
+ 'Damian Lillard' AS player,
+ 1978 AS points,
+ 2020 AS season)
+UNION ALL
+(SELECT
+ 'Devin Booker' AS player,
+ 1863 AS points,
+ 2020 AS season)
+UNION ALL
+(SELECT
+ 'James Harden' AS player,
+ 2818 AS points,
+ 2019 AS season)
+UNION ALL
+(SELECT
+ 'Paul George' AS player,
+ 1978 AS points,
+ 2019 AS season)
+ UNION ALL
+(SELECT
+ 'Kemba Walker' AS player,
+ 2102 AS points,
+ 2019 AS season)
+UNION ALL
+(SELECT
+ 'Damian Lillard' AS player,
+ 2067 AS points,
+ 2019 AS season)
+UNION ALL
+( SELECT 
+'Richard Bartner' AS player,
+ 2067 AS points,
+ 2019 AS season)
+UNION ALL
+(SELECT
+ 'Devin Booker' AS player,
+ 1700 AS points,
+ 2019 AS season)
+UNION ALL
+(SELECT
+ 'Paul George' AS player,
+ 1033 AS points,
+ 2020 AS season)
+UNION ALL
+(SELECT
+ 'Kemba Walker' AS player,
+ 1145 AS points,
+ 2020 AS season)
+UNION ALL
+(SELECT
+ 'Adam Gilchrist' AS player,
+ 1145 AS points,
+ 2020 AS season);
+
+ SELECT * FROM TOP_SCORERS ;
+
+ SELECT * FROM TOP_SCORERS ORDER BY SEASON;
+
+ SELECT DISTINCT (season) FROM TOP_SCORERS;
+
+
+SELECT SEASON, MAX(POINTS) AS MAXM_PNTS, MIN(POINTS) AS MIMN_PNTS
+FROM TOP_SCORERS
+GROUP BY 1
+ORDER BY 1;
+
+
+
+----------------------------------------------------------------------------------------------------------
+                                          -- YEAR ON YEAR CHANGE
+---------------------------------------------------------------------------------------------------------
+SELECT * FROM TOP_SCORERS order by season desc;
+
+select season,
+max(points) as maxm_points,
+min(points) as min_points
+FROM top_scorers
+group by season; -- check
+-- 2019 : min 1700, max 2818
+-- 2020: min 1033 max 2335
+
+-- check this code
+SELECT DISTINCT player,
+FIRST_VALUE(points) OVER (ORDER BY season) AS first_season_2019,
+LAST_VALUE (points) OVER (ORDER BY season) AS last_season_2020,
+((last_season_2020- first_season_2019)/first_season_2019) * 100 AS per_change
+FROM TOP_SCORERS -- mark first season : 2818 and Last_seson : 2335 why ? 
+
+
+ SELECT  player, points,season,
+FIRST_VALUE(points) OVER (ORDER BY season) AS first_season_2019,
+LAST_VALUE (points) OVER (ORDER BY season) AS last_season_2020,
+((last_season_2020- first_season_2019)/first_season_2019) * 100 AS per_change
+FROM TOP_SCORERS -- mark first season : 2818 and Last_seson : 2335 why ? creates confusion thus, partition is advisable
+
+
+-- Not valid becasue group by is not valid
+-- if you run the code without group by, it is just the first points and the last point 
+-- gets recorded for every player
+-- thus, there is a need of partition. 
+
+
+
+SELECT  player,points,season,
+FIRST_VALUE(points) OVER (PARTITION BY player ORDER BY season asc) AS first_season,
+LAST_VALUE (points) OVER (PARTITION BY player ORDER BY season asc) AS last_season,
+((last_season-first_season)/first_season)* 100 AS percent_change
+FROM TOP_SCORERS;
+
+
+
+SELECT  DISTINCT player,
+FIRST_VALUE(points) OVER (PARTITION BY player ORDER BY season asc) AS first_season,
+LAST_VALUE (points) OVER (PARTITION BY player ORDER BY season asc) AS last_season,
+((last_season-first_season)/first_season)* 100 AS percent_change
+FROM TOP_SCORERS;
+
+--------------------------------------------------------------------------------------------------------
+                                       -- DENSE_RANK()
+--------------------------------------------------------------------------------------------------------
+
+-- Find top 3 from each category or Season 
+
+SELECT * FROM
+(
+    SELECT 
+    season, 
+    player,
+    points,
+    dense_rank() OVER (PARTITION BY SEASON ORDER BY points DESC) AS ranking
+    from TOP_SCORERS
+) AS alias_table 
+WHERE ranking <= 3
+ORDER BY season,ranking;
+
+
