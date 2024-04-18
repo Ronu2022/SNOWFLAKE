@@ -1,0 +1,71 @@
+CREATE DATABASE RM_VIEWS;
+USE DATABASE RM_VIEWS;
+
+
+create or replace table rm_hospital_table 
+(
+     patient_id integer,
+     patient_name varchar, 
+     billing_address varchar,
+     diagnosis varchar, 
+     treatment varchar,
+     cost number(10,2)
+);
+
+insert into rm_hospital_table (patient_id, patient_name, billing_address, diagnosis, treatment, cost) 
+ values
+ (1, 'Mark Knopfler', '1982 Telegraph Road', 'Industrial Disease', 
+ 'a week of peace and quiet', 2000.00),
+ (2, 'Guido van Rossum', '37 Florida St.', 'python bite', 'anti-venom', 
+ 70000.00),
+ (3, 'Devin', '197 Brigade Road Texas', 'dog bite', 'Rabies Injection', 
+ 40000.00),
+ (4, 'Mark', '38 denver St Chicago', 'Dengue', 'Malaria', 
+ 50000.00),
+ (5, 'Peter', '78 New Yor City', 'Accident', 'Operation', 
+ 340000.00);
+
+
+ select * from rm_hospital_table;
+
+ describe table rm_hospital_table;
+
+ 
+ -- Creation of view let's say for a doctor (important columns for a doctor).
+
+create or replace view rm_doctor_view as
+ select patient_id, patient_name, diagnosis, treatment from rm_hospital_table;
+
+select * from rm_doctor_view;
+
+-- describe view rm_doctor_view
+describe view rm_doctor_view;
+
+-- view for an accountant
+
+create or replace view rm_accountant_view as
+select patient_id, patient_name, billing_address,cost from rm_hospital_table;
+
+SELECT * FROM rm_accountant_view;
+
+ -- A view can be used almost anywhere that a table can be used (joins, subqueries, etc.).
+-- Example: 
+ -- Show all of the types of medical problems for each patient:
+select distinct (diagnosis) from rm_doctor_view;
+
+
+--Show the cost of each treatment 
+-- (without showing personally identifying information about specific patients): 
+select d.treatment, a.cost,  from rm_doctor_view d
+inner join rm_accountant_view a on d.patient_id = a.patient_id
+
+
+select * from rm_doctor_view;
+SELECT * FROM rm_accountant_view;
+
+-- Let's insert a record in the main table to see if that gets updated in the view
+
+
+insert into rm_hospital_table (patient_id, patient_name, billing_address, diagnosis, treatment, cost) 
+ values
+ (6, 'Dark Sopler', '46 Park Street', 'Burn', 'ICU',700000);
