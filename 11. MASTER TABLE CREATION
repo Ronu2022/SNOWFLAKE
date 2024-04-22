@@ -1,0 +1,50 @@
+CREATE DATABASE RM_MASTER_TABLE;
+SELECT * FROM RM_BROKER;
+SELECT * FROM RM_CATAGORIES;
+SELECT * FROM RM_PRIORITIES;
+SELECT * FROM RM_PRODUCT;
+SELECT * FROM RM_REGION;
+SELECT * FROM RM_SOURCES;
+SELECT * FROM RM_STATE_REGION;
+SELECT * FROM RM_STATUSES;
+SELECT * FROM RM_TYPE;
+SELECT * FROM RM_CUST_MASTER;
+
+
+
+
+
+-- CREATION OF MASTER TABLE
+
+-- RM_COMPLAIN ? why this was chosen as main table with which joins to be there ? because table with maximum numvber of columns
+
+
+
+CREATE OR REPLACE TABLE RM_CUST_MASTER AS SELECT 
+
+COM.ID,COM.ComplainDate,COM.CompletionDate,
+CUS.LastName,CUS.FirstName,CUS.Gender,
+BR.BrokerFullName,BR.CommissionScheme,
+CAT.Description_Categories,
+SR.Region,
+ST.Description_Status, -- Note all these columns that are business columns would be part of the documentation process
+REG.state,
+PR.Product,
+PRI.Description_Priorities,
+SUR.Description_Source,
+TY.Description_Type
+
+FROM RM_COMPLAIN COM 
+
+LEFT OUTER JOIN RM_CUSTOMER CUS ON COM.CustomerID = CUS.CustomerID
+LEFT OUTER JOIN RM_REGION REG ON CUS.RegionID = REG.id
+LEFT OUTER JOIN RM_STATE_REGION SR ON REG.state_code = SR.State_Code
+LEFT OUTER JOIN RM_BROKER BR ON COM.BrokerID = BR.BrokerID
+LEFT OUTER JOIN RM_CATAGORIES CAT ON COM.ComplainCategoryID = CAT.ID
+LEFT OUTER JOIN RM_PRIORITIES PRI ON COM.ComplainPriorityID = PRI.ID
+LEFT OUTER JOIN RM_PRODUCT PR ON COM.ProductID = PR.ProductID
+LEFT OUTER JOIN RM_SOURCES SUR ON COM.ComplainSourceID = SUR.ID
+LEFT OUTER JOIN RM_STATUSES ST ON COM.ComplainStatusID = ST.ID
+LEFT OUTER JOIN RM_TYPE TY ON COM.ComplainTypeID = TY.ID;
+
+select * from RM_CUST_MASTER;
