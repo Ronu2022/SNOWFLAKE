@@ -1,0 +1,117 @@
+CREATE DATABASE RM_LEFT_JOINS;
+
+
+USE DATABASE RM_LEFT_JOINS;
+
+/* The Left join (or left outer join) is one of the most commonly used join statement in SQL Server. 
+A join lets us combine results from two or more tables into a single result set. 
+The left join includes all the results from the left table and includes only the matching rows from the right table. 
+
+Syntax :
+ 
+SELECT <Columns> 
+FROM tableA 
+LEFT JOIN tableB
+ON (join_condition)
+ 
+The join_condition defines the condition on which the tables are joined. The final result includes
+
+All the rows from the left table. i.e tableA
+Each row of the tableB is compared with the tableA. 
+If the condition is evaluated to true, then the rows from the tableB are included in the result.  
+A NULL value is assigned to every column of table B that does not have a matching row based on the join condition.
+The LEFT Join is the same as LEFT OUTER JOIN. The keyword OUTER is optional.
+
+CustomerType : Type of Customer like VIP / Regular etc
+Customers List of customers with Customer Type.
+Tables The list of tables available in the restaurant. CustomerID field indicates that the customer has reserved the table.
+Orders : The orders placed by the customer
+DiscVoucher The discounts slab based on the total value of the order
+*/
+
+
+create or replace table customerType (
+ CustomerTypeID int primary key, 
+ Name varchar(10)
+);
+ 
+insert into customerType values (1,'VIP');
+insert into customerType values (2,'Regular');
+ 
+ 
+create or replace table Customers (
+   CustomerID int primary key,
+   Name varchar(100),
+   CustomerTypeID int null,
+   CONSTRAINT FK_Customers_CustomerTypeID FOREIGN KEY (CustomerTypeID) REFERENCES customerType (CustomerTypeID)
+);
+ 
+insert into Customers values(1, 'Kevin Costner',1);
+insert into Customers values(2, 'Akshay Kumar',2);
+insert into Customers values(3, 'Sean Connery',1);
+insert into Customers values(4, 'Sanjay Dutt',2);
+insert into Customers values(5, 'Sharukh Khan',null);
+ 
+ 
+create table Tables (
+   TableNo int primary key,
+   CustomerID int null,
+   CONSTRAINT FK_Tables_CustomerID FOREIGN KEY (CustomerID) REFERENCES Customers (CustomerID)
+);
+ 
+insert into Tables values(1, null);
+insert into Tables values(2, 1);
+insert into Tables values(3, 2);
+insert into Tables values(4, 5);
+insert into Tables values(5, null);
+ 
+ 
+create or replace table Orders (
+   OrderNo int primary key,
+   OrderDate datetime,
+   CustomerID int null,
+   Amount decimal(10,2),
+   CONSTRAINT FK_Orders_CustomerID FOREIGN KEY (CustomerID) REFERENCES Customers (CustomerID)
+);
+ 
+insert into Orders Values(1,'2019-12-10',1,5000);
+insert into Orders Values(2,'2019-12-09',1,3000);
+insert into Orders Values(3,'2019-12-10',2,7000);
+insert into Orders Values(4,'2019-12-01',2,7000);
+insert into Orders Values(5,'2019-12-10',3,1000);
+insert into Orders Values(6,'2019-12-03',3,1000);
+insert into Orders Values(7,'2019-12-10',4,3000);
+insert into Orders Values(8,'2019-12-10',2,4000);
+ 
+create or replace table DiscVoucher (
+   FromAmount decimal(10,0) ,
+   UptoAmount decimal(10,0) ,
+   Discount decimal(10,0)
+);
+ 
+insert into DiscVoucher Values(0,3000,0);
+insert into DiscVoucher Values(3001,8000,10);
+insert into DiscVoucher Values(8001,99999,25) ;
+
+
+
+SELECT * FROM customerType;
+select * from Customers;
+select * from Tables;
+select * from Orders;
+select * from DiscVoucher;
+
+
+-- List of all Cxs and their Reserved table
+
+select c.Name, t.Tableno from Customers c LEFT OUTER JOIN  Tables t ON c.CustomerID = t.CustomerID; 
+
+
+-- List of all Tables irrespective of their Reservation 
+select t.Tableno, c.Name from Tables t Left Outer Join Customers c ON t.CustomerID = c.CustomerID; 
+
+
+-- How can you Implement Inner Join with a Left Join 
+-- Use Where
+select t.Tableno, c.Name from Tables t Left Outer Join Customers c ON t.CustomerID = c.CustomerID
+WHERE c.Name is NOT NULL;  -- This gives the result of Inner Join 
