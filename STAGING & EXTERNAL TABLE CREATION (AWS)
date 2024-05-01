@@ -1,0 +1,134 @@
+CREATE DATABASE RM_EXTERNAL_TABLE_CREATION_YOUTUBE;
+USE RM_EXTERNAL_TABLE_CREATION_YOUTUBE;
+
+/*STEPS*/
+
+
+
+/*STEP 1: CREATION OF s3 BUCKET - 4 STEPS*/
+
+-- Creation of Bucket
+-- Creation of Folders
+-- Bucket Settings ( PErmission for Public)
+-- edit policy
+/* The following code is to copy pasted with modification of arn::
+   {
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "AllowPublicRead",
+      "Effect": "Allow",
+      "Principal": {
+        "AWS":  "*"
+      },
+      "Action": "s3:GetObject",
+      "Resource": "arn:aws:s3:::snowflake-s3-ch-11-ext-stage4/*"
+    }
+      
+        ]
+}
+  
+*/
+
+
+CREATE OR REPLACE STORAGE integration Youtube_ext_table_s3_int
+TYPE = EXTERNAL_STAGE
+STORAGE_PROVIDER = S3
+ENABLED = TRUE
+STORAGE_AWS_ROLE_ARN = 'arn:aws:iam::211125439670:role/Youtube_role_ext_table'
+STORAGE_ALLOWED_LOCATIONS = ('s3://snowflake-s3-ch-11-ext-stage6/'); -- ('s3://bucket_name/')
+
+
+-- cheking for snowflake created ARNs for IAM_user and External ID 
+DESC integration Youtube_ext_table_s3_int; -- copied in json file edit in roles on AWS.
+
+/*
+ iam user arn arn:aws:iam::637423238909:user/71yl0000-s
+external id IT16771_SFCRole=2_RGqQ6Cintrcfbpxk9HHrSAlOZyY=
+*/
+
+
+-- Edit Trust relationship in Role created and update 
+   
+
+/* FILE FORMAT*/
+
+create or replace file format youtube_ext_csv
+    type = 'csv' 
+    compression = 'auto' 
+    field_delimiter = ','
+    skip_header = 0
+    field_optionally_enclosed_by = '\042'
+    null_if = ('\\N'); 
+
+
+/*STEP 2: S3 STAGING CREATION*/
+
+
+-- create an external stage with s3(AWS) bucket
+
+CREATE OR REPLACE STAGE youtube_stage_ext_table
+URL = 's3://snowflake-s3-ch-11-ext-stage6/csv/'
+FILE_FORMAT = youtube_ext_csv
+STORAGE_INTEGRATION = Youtube_ext_table_s3_int;
+
+
+-- desc stage and validate the definition 
+
+desc stage youtube_stage_ext_table;
+
+
+-- lets check for the files we just created thrugh the stage.
+list @youtube_stage_ext_table; -- I had one file 
+
+
+-- Lets query  the external stage without creating the table
+-- This can be done using $ notation
+select t.$1,t.$2,t.$3,t.$4,t.$5,t.$6,t.$7,t.$8 from @youtube_stage_ext_table (file_format => 'youtube_ext_csv') t; -- 1,2,3,4,etc are the column numbers. 
+
+
+-- what if you give an extra column in your dollar notation like $9, query will run but with null values in it. 
+select t.$1,t.$2,t.$3,t.$4,t.$5,t.$6,t.$7,t.$8,t.$9 from @youtube_stage_ext_table (file_format => 'youtube_ext_csv') t;
+
+
+/*-- CREATION OF EXTERNAL TABLE*/
+
+CREATE OR REPLACE EXTERNAL TABLE  Youtube_cust_et
+(
+  cust_key VARCHAR AS (VALUE:c1::VARCHAR),
+  name VARCHAR AS (VALUE:c2::VARCHAR),
+  address VARCHAR AS (VALUE:c3::VARCHAR),
+  nation_key VARCHAR AS(VALUE:c4::varchar),
+  phone VARCHAR AS(VALUE:c5::VARCHAR),
+  account_balance VARCHAR AS(value:c6::varchar),
+  market_segment VARCHAR AS(VALUE:c7::VARCHAR),
+  COMMENT VARCHAR AS(VALUE:c8::VARCHAR)
+)
+
+
+WITH location = @youtube_stage_ext_table
+AUTO_REFRESH = FALSE
+FILE_FORMAT = youtube_ext_csv
+; -- Table Successfully CReated
+
+
+-- Lets see the contents of the Table
+SELECT * FROM Youtube_cust_et; -- Since it is an external table sf automatically adds a column called value column  -- values of the each row is represented in each cell in a Json Format
+
+
+select t.$1,t.$2,t.$3 from @youtube_stage_ext_table (file_format => 'youtube_ext_csv') t
+
+-- Fetching Value Column and Mea data column
+select value, metadata$filename from Youtube_cust_et; -- shows the value clolumn and the metadatafilename
+
+
+-- Let's assume there are 4 Files you had uploaded in the folder CSV inside the bUcket: 
+select value,metadata$filename from Youtube_cust_et where metadata$filename = 'csv/customer_000.csv';
+
+
+desc external table Youtube_cust_et type = 'column';
+desc external table Youtube_cust_et type = 'stage'; -- also check the symbol of ext table how is it different from a table and view in snowflake
+
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
