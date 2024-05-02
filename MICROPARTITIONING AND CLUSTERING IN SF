@@ -1,0 +1,70 @@
+CREATE DATABASE RM_YOUTUBE_MICROPARTITIONS;
+USE RM_YOUTUBE_MICROPARTITIONS;
+
+
+/* CREATION OF TABLES*/
+
+-- t1: Table with no cluster key , SF will do it by itself.
+-- t2 with order date as cluster key (Natural Order)
+-- t3 Order Prority as cluster Key (Low Cardinality)
+
+
+create or replace table t1_no_cluster -- No custer key
+(
+ o_orderkey number(38,0),
+ o_custkey number(38,0),
+ o_orderstatus varchar(1),
+ o_totalprice number(12,2),
+ o_orderdate date,
+ o_orderpriority varchar(15),
+ o_clerk varchar(15),
+ o_shippriority number(38,0),
+ o_comment varchar(79)
+);
+
+
+create or replace table t2_order_dt
+(
+ o_orderkey number(38,0),
+ o_custkey number(38,0),
+ o_orderstatus varchar(1),
+ o_totalprice number(12,2),
+ o_orderdate date, -- cluster key
+ o_orderpriority varchar(15),
+ o_clerk varchar(15),
+ o_shippriority number(38,0),
+ o_comment varchar(79)
+)
+cluster by (o_orderdate);
+
+
+
+create or replace table t2_order_priority
+(
+ o_orderkey number(38,0),
+ o_custkey number(38,0),
+ o_orderstatus varchar(1),
+ o_totalprice number(12,2),
+ o_orderdate date,
+ o_orderpriority varchar(15), --cluster key
+ o_clerk varchar(15),
+ o_shippriority number(38,0),
+ o_comment varchar(79)
+)
+cluster by (o_orderpriority);
+
+
+ 
+-- Let's check n the created tables
+
+SELECT * FROM information_schema.tables WHERE table_schema = 'PUBLIC'; -- check in one table clustering is off, and the other two clustering is on
+
+-- ALtering the cluster key 
+
+alter table t2_order_priority cluster by (o_clerk);
+
+
+-- Dropping the CLuster key 
+alter table t2_order_priority drop clustering key; 
+
+
