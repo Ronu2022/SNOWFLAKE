@@ -1,4 +1,6 @@
+CREATE DATABASE RM_WINDOWFUNC;
 USE DATABASE RM_WINDOWFUNC;
+
 
 CREATE OR REPLACE TABLE EMPLOYEE
 (
@@ -51,23 +53,21 @@ SELECT * FROM employee;
 
 SELECT *,SUM(salary) OVER () AS total_salary FROM employee; -- note so without orderby also it operates.
 
+select *, sum(salary) over() as total_salary from 
 
 
 -- display total salary, %contribution  along all the records row value
+
+
 SELECT *,SUM(salary) OVER () AS total_salary,
 ROUND((salary/total_salary)*100,2) perc_contribution
 FROM employee
 ORDER BY perc_contribution DESC;
 
 ---------------------------------------------------------------------------------------------------------
--- display total salary per job category for all rows
 
-SELECT *, SUM(salary) OVER (PARTITION BY job_role ) AS x 
-FROM employee;
 
-SELECT *, SUM(salary) OVER (PARTITION BY job_role  order by emp_name) AS x
-FROM employee; -- if you see this there are irregularities 
-
+-- Rolling sum 
 
 -- Thus intriduced window frame
 SELECT *, 
@@ -79,6 +79,10 @@ FROM employee -- here  it partitions by job_role within which the emp_name is ar
 -- The real problem is in snowflake they are not ordered as per orderby in the window func unlike mysql
 -- Thus, an external order by is required 
 
+
+select *, sum(salary) over(partition by job_role order by emp_name asc rows between unbounded preceding and current row) as rolling_dep_salary from employee
+
+partition by column_name order b column_nmae rows between unbounded preceding and current row
 SELECT *, 
 SUM(salary) OVER (PARTITION BY job_role  order by emp_name ASC ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS x FROM employee
 ORDER BY job_role, emp_name ASC ;
@@ -99,11 +103,20 @@ SELECT *, SUM(salary) OVER (PARTITION BY job_role  order by empid DESC ROWS BETW
 FROM employee
 ORDER BY job_role, empid desc;
 
+
+
 ---------------------------------------------------------------------------------------------------------
                       -- DISPLAY THE MAX SALARY PER JOB CATEGORY FOR ALL THE ROWS
 ---------------------------------------------------------------------------------------------------------
-select * from employee;                                                                                 select *, max(salary) over (partition by job_role ) as max_salary from employee 
-order by job_role,empid;
+select * from employee;
+
+select *, 
+first_value(salary) over(partition by job_role order by salary desc ) as max_salary,
+last_value(salary) over (partition by job_role order by salary desc) as min_salary
+from employee;
+
+
+
 
 -- check what if we use orderby within 
 select *, 
@@ -111,7 +124,10 @@ max(salary) over (partition by job_role order by emp_name rows between unbounded
 from employee  -- same concept applies
 order by job_role,emp_name; -- orderby for the same reason as above
                                                                                                          
-                                                                                                         -- in the above let's calculate the %                                                                    
+ -- in the above let's calculate the % 
+
+
+                                                               
 select *,
 max(salary) over (partition by job_role order by emp_name rows between unbounded preceding and current row) as max_salary,
 round((salary / max_salary) * 100, 2) as percent_share
@@ -135,6 +151,8 @@ max(salary) over (partition by job_role) as max_sal,
 sum(salary) over (partition by job_role) as dept_sal
 from employee
 order by job_role;
+
+
 
 ---------------------------------------------------------------------------------------------------------
                                            -- ROW_NUMBER()
@@ -190,6 +208,8 @@ VALUES
  ('C', '2021-01-07', '3');
 
 
+
+
 CREATE OR REPLACE TABLE AJ_menu 
 (
  product_id INTEGER,
@@ -223,45 +243,45 @@ select * from AJ_members; -- customer_id, join_date
 
 --What was the first item from the menu purchased by each customer?
 
-SELECT * FROM
-(
-SELECT customer_id, order_date, product_name, dense_rank() over (partition by customer_id order by order_date ASC) as chronology FROM
-(
-select s.customer_id,s.order_date, s.product_id,
-m.product_name,m.price from AJ_sales as s
-left join AJ_menu as m 
-on s.product_id = m.product_id
-) as alias_table
-) as alias_table2 
-WHERE chronology = 1
-ORDER BY customer_id ASC ,order_date asc, product_name asc; 
+-- let's use first_value() first:
 
-
-
---What is the most purchased item on the menu and how many times was it purchased by all customers?
-
-Select * from AJ_sales; -- customer_id,order_date,product_id
-select * from AJ_menu; -- product_id, product_name, price
-select * from AJ_members; -- customer_id, join_date
-
-SELECT * FROM
+select 
+customer_id, 
+order_date, 
+product_name, 
+first_value(product_name) Over(partition by customer_id order by order_date asc) as first_product_purchased
+from
 (
 
-SELECT *, dense_rank() over (order by no_of_purchase desc) as ranking FROM
+select s.customer_id,s.order_date,s.product_id, m.product_name,m.price,me.join_date from AJ_sales s 
+left join AJ_menu m on s.product_id = m.product_id
+left join AJ_members me on s.customer_id = me.customer_id
+) as alias_name; 
+ -- look at the result the first purchased product for eg for a, is sushi, but curry was alos purchased on teh same date. 
+
+
+-- using dense_rank()
+
+Select * from 
 (
-    select product_name, count(product_name)  as no_of_purchase FROM
-    (
-        select s.customer_id,s.order_date, s.product_id,
-        m.product_name,m.price from AJ_sales as s
-        left join AJ_menu as m 
-        on s.product_id = m.product_id
-    ) 
-    group by product_name
-    order by no_of_purchase desc
+
+select 
+
+customer_id,
+order_date, 
+product_name,
+dense_rank() over(partition by customer_id order by order_date asc) as chronology 
+from 
+(
+select s.customer_id,s.order_date,s.product_id, m.product_name,m.price,me.join_date from AJ_sales s 
+left join AJ_menu m on s.product_id = m.product_id
+left join AJ_members me on s.customer_id = me.customer_id
 
 ) as alias_table
-) as alias_table2 
-WHERE ranking = 1; 
 
----------------------------------------------------------------------------------------------------------
+) as alias_table2
+where chronology = 1
+
+
+
 
