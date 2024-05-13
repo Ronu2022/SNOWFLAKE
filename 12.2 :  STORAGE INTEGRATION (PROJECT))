@@ -1,0 +1,107 @@
+CREATE DATABASE RETAILS; 
+  FOREIGN KEY (CAMPAIGN) REFERENCES CAMPAIGN_DESC_RAW(CAMPAIGN),
+  FOREIGN KEY (household_key) REFERENCES demographic_RAW(household_key)
+
+);
+
+
+
+CREATE OR REPLACE TABLE PRODUCT_RAW
+( 
+  PRODUCT_ID INT PRIMARY KEY, 
+  MANUFACTURER INT,
+  DEPARTMENT VARCHAR(50),
+  BRAND VARCHAR(30),
+  COMMODITY_DESC VARCHAR(65),
+  SUB_COMMODITY_DESC VARCHAR(65),
+  CURR_SIZE_OF_PRODUCT VARCHAR(15)
+); 
+
+
+CREATE OR REPLACE TABLE COUPON_RAW
+(
+  COUPON_UPC INT,
+  PRODUCT_ID  INT,
+  CAMPAIGN INT,
+  FOREIGN KEY (PRODUCT_ID) REFERENCES PRODUCT_RAW(PRODUCT_ID),
+  FOREIGN KEY (CAMPAIGN) REFERENCES CAMPAIGN_DESC_RAW(CAMPAIGN)
+); 
+
+
+CREATE OR REPLACE TABLE COUPON_REDEMPT_RAW
+(
+  household_key INT,
+  DAY INT,
+  COUPON_UPC INT,
+  CAMPAIGN INT,
+  FOREIGN KEY (household_key) REFERENCES demographic_Raw(household_key),
+  FOREIGN KEY (CAMPAIGN) REFERENCES CAMPAIGN_DESC_RAW(CAMPAIGN)
+); 
+
+
+CREATE OR REPLACE TABLE TRANSACTION_RAW
+(
+  household_key INT,
+  BASKET_ID INT,
+  DAY INT,
+  PRODUCT_ID INT,
+  QUANTITY INT,
+  SALES_VALUE FLOAT,
+  STORE_ID INT,
+  RETAIL_DISC FLOAT,
+  TRANS_TIME INT,
+  WEEK_NO INT,
+  COUPON_DISC INT,
+  COUPON_MATCH_DISC INT,
+  FOREIGN KEY (PRODUCT_ID) REFERENCES PRODUCT_RAW(PRODUCT_ID),
+  FOREIGN KEY (household_key) REFERENCES demographic_Raw(household_key)
+
+);
+
+
+----------------------------------------------------------------------------------------------------------------------- 
+                                 /* Storage Integration with AWS*/
+----------------------------------------------------------------------------------------------------------------------- 
+
+CREATE OR REPLACE STORAGE integration s3_int
+TYPE = EXTERNAL_STAGE
+STORAGE_PROVIDER = S3
+ENABLED = TRUE
+STORAGE_AWS_ROLE_ARN = 'arn:aws:iam::211125439670:role/myretailrole'
+STORAGE_ALLOWED_LOCATIONS = ('s3://retailraw2022/'); -- ('s3://bucket_name/')
+
+
+-- cheking for snowflake created ARNs for IAM_user and External ID 
+DESC integration s3_int; -- copied in json file edit in roles on AWS.
+
+
+-- CREATING FILE FORMAT
+
+create or replace file format retail_csv 
+    type = 'csv' 
+    compression = 'none' 
+    field_delimiter = ','
+    field_optionally_enclosed_by = 'none'
+    skip_header = 1 ; 
+
+
+
+
+
+
+-- STAGE CREATION
+
+CREATE OR REPLACE STAGE RETAIL_STAGE
+URL = 's3://retailraw2022'
+FILE_FORMAT = RETAIL_CSV
+STORAGE_INTEGRATION = s3_int;
+
+LIST @RETAIL_STAGE;
+
+show stages;
+
+
+
+-- NOW IT IS CONNECTED
+-- I WANT TO MAKE ITY AUTOMATED SUCH THAT THE MOMENT THE CLIENT ADSS MORE DATA INTO THE BUCKET, IT IS AUTO UPDATED HERE 
+-- INGESION 
