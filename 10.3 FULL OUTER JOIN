@@ -131,4 +131,13 @@ select x.a,y.b from x right join y on x.a = y.b;
 
 select x.a,y.b from x full outer join y on x.a = y.b; 
 
+
+select * from 
+(
+
+select x.a,y.b from x full outer join y on x.a = y.b 
+) as alias_name
+ where a IS NULL or B is NULL or (a is NULL and B is NULL); 
+
+
 --------------------------------------------------------------------------------------------------------------------------------
