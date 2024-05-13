@@ -1,0 +1,41 @@
+CREATE DATABASE RM_CROSS_JOIN;
+
+INSERT INTO sales_organization (sales_org_id, sales_org)
+VALUES
+	(1, 'Domestic'),
+	(2, 'Export');
+
+-- The company can distribute goods via various channels such as wholesale, retail, eCommerce, and TV shopping.
+-- The following statement inserts sales channels into the sales_channel table:
+
+INSERT INTO sales_channel (channel_id, channel)
+VALUES
+	(1, 'Wholesale'),
+	(2, 'Retail'),
+	(3, 'eCommerce'),
+	(4, 'TV Shopping');
+
+select * from sales_organization;
+select * from sales_channel;
+
+
+
+-- To find the all possible sales channels that a sales organization can have, you use the CROSS JOIN to join the sales_organization table with the sales_channel table as follows:
+
+SELECT sales_org,channel
+FROM sales_organization
+CROSS JOIN sales_channel; 
+
+-- The result set includes all possible rows in the sales_organization and sales_channel tables.
+
+-- The following query is equivalent to the statement that uses the CROSS JOIN clause above:
+
+SELECT sales_org,channel
+FROM sales_organization,sales_channel;
+
+
+-- In some database systems such as PostgreSQL and Oracle, you can use the INNER JOIN clause with the condition that always evaluates to true to perform a cross join such as:
+
+SELECT sales_org,channel
+FROM sales_organization
+INNER JOIN sales_channel ON 1 = 1;
