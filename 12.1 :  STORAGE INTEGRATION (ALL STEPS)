@@ -1,0 +1,92 @@
+CREATE DATABASE practise_aws;
+use practise_aws;
+
+
+-- Table creation 
+
+CREATE OR REPLACE TABLE demographic_Raw
+(
+  AGE_DESC CHAR(20),
+  MARITAL_STATUS_CODE CHAR(5),
+  INCOME_DESC VARCHAR(40),
+  HOMEOWNER_DESC VARCHAR(40),
+  HH_COMP_DESC VARCHAR(50),
+  HOUSEHOLD_SIZE_DESC VARCHAR(50),
+  KID_CATEGORY_DESC VARCHAR(40),
+  household_key INT PRIMARY KEY
+);
+
+
+select * from demographic_Raw; 
+
+
+--- storage integration 
+
+create or replace storage integration s3_abc
+type = external_stage
+storage_provider = S3
+enabled = True
+storage_aws_role_arn = 'arn:aws:iam::211125439670:role/samplerole'
+storage_allowed_locations = ('s3://samplebucketronu/');
+
+
+-------------------------------------------------------------------------------------------------------------------------
+
+
+DESC integration s3_abc;
+
+-- copy the ARNs created by snowflake  user_arn and external_id arn
+   -- arn:aws:iam::637423238909:user/71yl0000-s
+   -- IT16771_SFCRole=2_iF5sO/URtRxC/KFyDo47ob8ps6U= 
+
+
+-- go to the respective role name in AWS
+-- Trust relationship -> json -> edit relationship  -> copy paste the path there -> Update Policy
+
+
+
+
+-------------------------------------------------------------------------------------------------------------------------
+
+-- FILE FORMAT CREATION
+
+
+create or replace file format retail_format2
+type = csv
+compression = 'none'
+field_delimiter = ','
+field_optionally_enclosed_by = 'none'
+skip_header = 1;
+
+------------------------------------------------------------------------------------------------------------------------
+-- Staging 
+
+create or replace stage sample_stage
+url = 's3://samplebucketronu'
+file_format = retail_format2
+storage_integration = s3_abc;
+
+LIST @sample_stage;
+
+
+-------------------------------------------------------------------------------------------------------------------------
+
+snowpiping:
+
+  -- it recognises the csv ingested in the external source
+  -- copies it into the existing table here 
+
+create or replace pipe sample_retail_deographic auto_ingest = TRUE as 
+copy into PRACTISE_AWS.PUBLIC.DEMOGRAPHIC_RAW
+from '@sample_stage/DEMOGRAHIC22/'
+file_format = retail_format2;
+
+
+show pipes; 
+--  notification channel required for email notification
+
+------------------------------------------------------------------------------------------------------------------------
+
+alter pipe sample_retail_deographic refresh;
+
+select * from PRACTISE_AWS.PUBLIC.DEMOGRAPHIC_RAW;
