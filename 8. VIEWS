@@ -69,3 +69,60 @@ SELECT * FROM rm_accountant_view;
 insert into rm_hospital_table (patient_id, patient_name, billing_address, diagnosis, treatment, cost) 
  values
  (6, 'Dark Sopler', '46 Park Street', 'Burn', 'ICU',700000);
+
+
+/* MATERIALIZED VS NONMATERIALIZED VIEW*/ 
+
+
+ -- Create the sales table
+CREATE OR REPLACE TABLE sales
+(
+    sale_id INTEGER,
+    product_id INTEGER,
+    quantity INTEGER,
+    amount FLOAT
+);
+
+
+ -- Insert records into the sales table
+INSERT INTO sales (sale_id, product_id, quantity, amount)
+VALUES
+    (1, 101, 2, 50.00),
+    (2, 102, 1, 30.00),
+    (3, 101, 3, 75.00),
+    (4, 103, 2, 60.00),
+    (5, 102, 1, 30.00);
+
+
+select * from sales; 
+
+/*-- Non Materialized view */
+
+create or replace view nm_view as
+select product_id, sum(amount) as total_sales_amount 
+from sales group by product_id; 
+
+
+select * from nm_view; 
+
+-- Let's insert some record in the original table 
+
+INSERT INTO sales (sale_id, product_id, quantity, amount)
+VALUES
+ (6, 106, 2, 40.00);
+
+ select * from sales; 
+
+ select * from nm_view;  -- auto_updated beacuse there is nothiong stored in the view, each time the underlying query is executed
+ -- which fetches resuults dynamically 
+-- Thus a Non- materialized view changes accordingly 
+
+
+/*-- Materialized view */
+
+ select * from sales; 
+
+ create or replace materialized view mv_sales as
+ select product_id, sum(amount) as total_sales_amount
+ from sales group by product_id;  -- but snoflake doesnt support materialized views 
+ 
