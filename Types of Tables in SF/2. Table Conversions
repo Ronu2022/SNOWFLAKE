@@ -1,0 +1,33 @@
+/*Conversion of Tables*/ 
+
+-- permanent to transient
+create or replace  table employees_permanent
+(
+    employee_id number,
+    empl_join_date date,
+    dept varchar(10),
+    salary number,
+    manager_id number
+);  
+
+show tables; -- permanent table created
+
+-- let's change them to a transient table
+
+create or replace transient table employees_transient2
+clone employees_permanent;
+
+
+-- transient to temporary
+create or replace temporary table employees_temporary 
+clone employees_transient2;
+
+
+-- temporary to permanent or transient to permanent isn;t posible
+
+create or replace table permanent_table2
+clone employees_temporary; -- shows error 
+
+
+
+
