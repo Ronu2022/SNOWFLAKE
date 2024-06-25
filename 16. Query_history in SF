@@ -1,0 +1,78 @@
+/* Query History In SF*/
+
+
+-- allows 14 days of viewing query histor.
+-- various options to filter : by user,warehouse,etc. 
+-- allows download of results for 24 hrs.
+-- you can view any query history, but not the result. 
+
+
+select * from "SNOWFLAKE_SAMPLE_DATA"."TPCDS_SF100TCL"."CALL_CENTER";
+
+
+-- let's first suspend the virtual warehouse
+
+alter warehouse compute_wh resume;  -- resumed
+alter warehouse compute_wh suspend;  -- suspended
+
+
+select count(*) from "SNOWFLAKE_SAMPLE_DATA"."TPCDS_SF100TCL"."CALL_CENTER"; -- look the warehouse is supeneded still
+-- snowflake gives result withjout using the warehouse.
+
+-- Recall the architecture of SF: 
+  -- Service Layer : in this cloud service layer, metadata is stored, meant for optimisation of queries
+  -- Compute Layer
+  -- Storage Layer 
+
+-- so, the metadata of the table: rowcount, size, variable, types etc are stored in the cloud service layer
+-- thus, snowflake while giving you these details doesnt require the usage of warehouses 
+
+
+-- let's try select statemnet: 
+
+select * from "SNOWFLAKE_SAMPLE_DATA"."TPCDS_SF100TCL"."CALL_CENTER"; -- note the warehouse is now utilised turns green 
+-- because the cloud service layer only keeps the Metadata in it, doesnt stores the actual data. 
+-- to get actual data the warehouse is required.  -- NOTE : this took 109 ms to get the results
+
+select * from "SNOWFLAKE_SAMPLE_DATA"."TPCDS_SF100TCL"."CALL_CENTER"; -- took 79 ms suggests, this time it didnt go to the origibal location to retireve rather got data from the content already retrieved i.e results. 
+
+
+-- let's now use a where condition to check 
+
+select * from "SNOWFLAKE_SAMPLE_DATA"."TPCDS_SF100TCL"."CALL_CENTER"
+where CC_CALL_CENTER_SK <= 5; -- took 785ms
+
+select * from "SNOWFLAKE_SAMPLE_DATA"."TPCDS_SF100TCL"."CALL_CENTER"
+where CC_CALL_CENTER_SK <= 5;  -- took 67ms : fetched from the result query, this way SF optimizes the costs. 
+
+
+
+-------------------------------------------------------------------------------------------------------------------------------------
+
+/*SQL QUERY HISTORY COMMANDS*/ 
+
+-- last 100 queries in the current_session: 
+
+select * from table(information_schema.query_history_by_session());
+
+select * from table(information_schema.query_history_by_session())
+order by start_time;
+
+-- query history by warehouse
+
+select * from table(information_schema.query_history_by_warehouse());
+
+select * from table(information_schema.query_history_by_warehouse())order by start_time; 
+
+-- query history by username
+select * from table(information_schema.query_history_by_user()) order by start_time;
+
+select * from table(information_schema.query_history_by_user()) where user_name like 'SHAKE%';
+
+select * from table(information_schema.query_history_by_user()) where user_name like 'SHAKE%' and
+role_name like 'P%' order by start_time;
+
+
+-- let's retireve data from last 7 days
+select * from table(information_schema.query_history_by_user())
+where start_time  between dateadd(DAY, -7, current_date()) and current_date();
