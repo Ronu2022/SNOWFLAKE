@@ -1,0 +1,56 @@
+
+-- abs: 
+- returns +ve value 
+
+select abs(-2.3482) as positive_value;
+
+-- CEIL:
+-- returns the values rounded to the nearest equal of larger integer. 
+
+select ceil(2.38) as ceil_answer;
+
+-- FLOOR
+select floor(2.38) as floor_answer;
+
+-- COALESCE: 
+-- returns the first non_null expression among its arguments or NULL if all its arguments are null.
+
+SELECT column1, column2, column3, coalesce(column1, column2, column3)
+FROM (values
+  (1,    2,    3   ),
+  (null, 2,    3   ),
+  (null, null, 3   ),
+  (null, null, null),
+  (1,    null, 3   ),
+  (1,    null, null),
+  (1,    2,    null)
+) x;
+
+
+-- COMPRESS: Compresses the input string or binary value with a compression method.
+    -- outputs binary value/hexadecimal characters for readability.
+/* snowflake supported compression methods:
+    SNAPPY
+    ZLIB
+    ZSTD
+    BZ2
+*/
+select *, compress(c_mktsegment, 'snappy') as new_mktsegment from "SNOWFLAKE_SAMPLE_DATA"."TPCH_SF001"."CUSTOMER";
+
+
+/*concantenates*/
+
+select concat('Hi', 'are', 'you','there');
+
+select ('Hi'|| 'are'|| 'you');
+
+/*UPPER*/
+
+select upper('are you from delhi');
+
+/*LOWER*/
+select lower('are you okay');
+
+/*substr or substring*/
+
+select substr('Hello world', 1,2);
