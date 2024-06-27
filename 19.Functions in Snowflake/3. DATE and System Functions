@@ -1,0 +1,320 @@
+select CURRENT_DATE();
+select CURRENT_TIMESTAMP();
+select current_time();
+
+
+select quarter(current_timestamp());
+
+
+
+select date_trunc('<Month')
+
+
+
+select CURRENT_TIME();
+
+-- CONVERT TIMEZONE
+select CONVERT_TIMEZONE('UTC',CURRENT_TIMESTAMP) AS UTC_TIMEZONE
+
+
+select YEAR(current_timestamp()),
+       MONTH(current_timestamp()),
+       WEEK(current_timestamp()), -- week starts from the start of the year thus,13
+       DAY(current_timestamp()),
+       HOUR(current_timestamp()),
+       MINUTE(current_timestamp()),
+       SECOND(current_timestamp());
+
+       
+----------------------------------------------------------------------------------------------------------
+                                            -- EXTRACT
+----------------------------------------------------------------------------------------------------------
+
+SELECT EXTRACT(YEAR FROM CURRENT_DATE());
+SELECT EXTRACT(MONTH FROM CURRENT_DATE());
+SELECT EXTRACT(WEEK FROM CURRENT_DATE());
+SELECT EXTRACT(DAY FROM CURRENT_DATE())
+SELECT EXTRACT(QUARTER FROM CURRENT_DATE());
+
+
+
+----------------------------------------------------------------------------------------------------------
+                                            -- LAST_DAY()
+----------------------------------------------------------------------------------------------------------
+SELECT LAST_DAY(current_date());
+
+SELECT LAST_DAY(current_date() - INTERVAL '1 MONTH');
+SELECT LAST_DAY(CURRENT_DATE() - INTERVAL '- 2 MONTH'); 
+
+
+-- q. find the last day of previous month
+select last_day(add_months(current_date(),-1));
+
+
+select last_day(current_date() - interval '1 Month')
+
+
+
+
+select last_day(dateadd(month, -1, current_date()))
+
+----------------------------------------------------------------------------------------------------------
+                                            -- ADD_MONTHS()
+----------------------------------------------------------------------------------------------------------
+
+SELECT ADD_MONTHS(current_date,4) AS date_after_4months; -- addition of 4 months
+
+SELECT ADD_MONTHS(current_date,-4) AS date_beforer_4months; -- substraction of 4 months
+-- could also be done using dateadd() function. 
+-- IN MYSQL
+-- select date_sub(current_date(), interval 4 month)
+-- select date_add
+
+SELECT dateadd(month, -4, current_date()) AS date_beforer_4months;
+
+select dateadd()
+
+
+
+
+
+----------------------------------------------------------------------------------------------------------
+                                            -- DATEADD()
+----------------------------------------------------------------------------------------------------------
+select dateadd(day, 30, current_date()) -- adds 30 days
+select dateadd(day,-30,current_date()) -- substracts 30 days from the current date
+select dateadd(month,1, current_date());
+select dateadd(year, 1, current_date());
+
+
+
+--IN mYSQL:
+
+select date_sub(current_date(), INTERVAL 30 Day)
+
+
+
+----------------------------------------------------------------------------------------------------------
+                                            -- DATEDIFF()
+----------------------------------------------------------------------------------------------
+
+
+
+select datediff(day,current_date(),'2024-01-01');
+
+select datediff(month,current_date(),'2024-01-01');
+
+select datediff(year,current_date(),'2024-01-01');
+
+Select datediff(month, '2023-12-01', current_date()); -- here alos higher date is first and then lower date just like timestampdiff whichworks fo rboth MY SQL and snowflake 
+
+
+select timestampdiff(year, current_date(), '2024-01-01'); -- this also works 
+
+
+select datediff('2024-04-10','2023-04-10'); -- this was for MYSQL 
+-- hIgher date first followed by lower date
+-- it gives in days thus timestampdiff comes in picture
+
+
+
+---------------------------------------------------------------------------------------------------------
+                                            -- TO_VARCHAR()
+---------------------------------------------------------------------------------------------------------
+
+-- converts the date into desired format (but as a sring)
+
+SELECT TO_VARCHAR(ADD_MONTHS(CURRENT_DATE,4),'DD-MM-YYYY') AS date_after_4months;
+
+select to_varchar(CURRENT_DATE(),'DD-MM-YYYY');
+
+-- IN MYSQL:
+  -- select date_format(current_date(),'%d/%m/%Y');
+
+
+select to_varchar(current_date(), 'YYYY-MM-DD')
+select to_varchar(current_date())
+
+
+---------------------------------------------------------------------------------------------------------
+                                            -- TO_DATE()
+---------------------------------------------------------------------------------------------------------
+
+
+select to_date('2022-02-01','YYYY-MM-DD');
+
+
+
+-- in  mSYQL
+select str_to_date(currdate(), '%d-%m-%Y')
+---------------------------------------------------------------------------------------------------------
+                                            -- TO_CHAR()
+---------------------------------------------------------------------------------------------------------
+
+select to_char(to_date('1993-03-31'));
+
+select to_char(to_date('1993-03-31'),'YY-dd');
+select to_char(to_date(current_date()),'YY'); -- you can represent in any format 
+select to_char(current_date,'YY');
+
+---------------------------------------------------------------------------------------------------------
+
+CREATE OR REPLACE  TABLE transactions 
+(
+    trans_id INT,
+    account_id INT,
+    txn_date DATE,
+    type VARCHAR(20),
+    txn_amount DECIMAL(10, 2),
+    balance DECIMAL(10, 2),
+    bank_name VARCHAR(100)
+);
+
+INSERT INTO transactions (trans_id, account_id, txn_date, type, txn_amount, balance, bank_name) VALUES
+(100001, 1234, '2024-01-01', 'Withdrawal', 5000.00, 10000.00, 'State Bank of India'),
+(100002, 5678, '2024-01-02', 'Deposit', 8000.00, 18000.00, 'HDFC Bank'),
+(100003, 9876, '2024-01-03', 'Withdrawal', 3000.00, 15000.00, 'ICICI Bank'),
+(100004, 2468, '2024-01-04', 'Withdrawal', 2500.00, 12500.00, 'Axis Bank'),
+(100005, 1357, '2024-01-05', 'Deposit', 6000.00, 18500.00, 'Kotak Mahindra Bank'),
+(100006, 8642, '2024-01-06', 'Withdrawal', 4500.00, 14000.00, 'IndusInd Bank'),
+(100007, 9753, '2024-01-07', 'Deposit', 7000.00, 21000.00, 'Yes Bank'),
+(100008, 3698, '2024-01-08', 'Withdrawal', 3500.00, 17500.00, 'Federal Bank'),
+(100009, 7412, '2024-01-09', 'Withdrawal', 2000.00, 15500.00, 'Canara Bank'),
+(100010, 8523, '2024-01-10', 'Deposit', 5500.00, 21000.00, 'Punjab National Bank'),
+(100011, 9634, '2024-01-11', 'Withdrawal', 4000.00, 17000.00, 'Bank of Baroda'),
+(100012, 1596, '2024-01-12', 'Withdrawal', 3500.00, 13500.00, 'IDBI Bank'),
+(100013, 3579, '2024-01-13', 'Deposit', 7000.00, 20500.00, 'UCO Bank'),
+(100014, 4681, '2024-01-14', 'Withdrawal', 2500.00, 18000.00, 'Bandhan Bank'),
+(100015, 5829, '2024-01-15', 'Withdrawal', 3000.00, 15000.00, 'Central Bank of India'),
+(100016, 6932, '2024-01-16', 'Deposit', 9000.00, 24000.00, 'Indian Bank'),
+(100017, 7254, '2024-01-17', 'Withdrawal', 4000.00, 20000.00, 'Oriental Bank of Commerce'),
+(100018, 8471, '2024-01-18', 'Withdrawal', 3500.00, 16500.00, 'Union Bank of India'),
+(100019, 9623, '2024-01-19', 'Deposit', 7500.00, 24000.00, 'State Bank of Patiala'),
+(100020, 2746, '2024-01-20', 'Withdrawal', 2000.00, 22000.00, 'Bank of Maharashtra');
+
+INSERT INTO transactions (trans_id, account_id, txn_date, type, txn_amount, balance, bank_name) VALUES
+(100021, 3928, '2024-01-21', 'Deposit', 6500.00, 28500.00, 'Allahabad Bank'),
+(100022, 4265, '2024-01-22', 'Withdrawal', 3500.00, 25000.00, 'Andhra Bank'),
+(100023, 5398, '2024-01-23', 'Withdrawal', 2000.00, 23000.00, 'Bank of India'),
+(100024, 6374, '2024-01-24', 'Deposit', 7000.00, 30000.00, 'Bank of Maharashtra'),
+(100025, 7485, '2024-01-25', 'Withdrawal', 4000.00, 26000.00, 'Canara Bank'),
+(100026, 8519, '2024-01-26', 'Deposit', 5500.00, 31500.00, 'Central Bank of India'),
+(100027, 9647, '2024-01-27', 'Withdrawal', 2500.00, 29000.00, 'Corporation Bank'),
+(100028, 2713, '2024-01-28', 'Deposit', 8000.00, 37000.00, 'Dena Bank'),
+(100029, 3892, '2024-01-29', 'Withdrawal', 3000.00, 34000.00, 'Indian Bank'),
+(100030, 4963, '2024-01-30', 'Deposit', 6000.00, 40000.00, 'Indian Overseas Bank'),
+(100031, 5891, '2024-01-31', 'Withdrawal', 3500.00, 36500.00, 'IDBI Bank'),
+(100032, 6947, '2024-02-01', 'Withdrawal', 2000.00, 34500.00, 'Oriental Bank of Commerce'),
+(100033, 7965, '2024-02-02', 'Deposit', 7500.00, 42000.00, 'Punjab National Bank'),
+(100034, 8257, '2024-02-03', 'Withdrawal', 3000.00, 39000.00, 'UCO Bank'),
+(100035, 9341, '2024-02-04', 'Withdrawal', 3500.00, 35500.00, 'United Bank of India'),
+(100036, 1628, '2024-02-05', 'Deposit', 9000.00, 44500.00, 'Vijaya Bank'),
+(100037, 2836, '2024-02-06', 'Withdrawal', 4000.00, 40500.00, 'Yes Bank'),
+(100038, 3981, '2024-02-07', 'Withdrawal', 2000.00, 38500.00, 'Allahabad Bank'),
+(100039, 5294, '2024-02-08', 'Deposit', 6500.00, 45000.00, 'Andhra Bank'),
+(100040, 6279, '2024-02-09', 'Withdrawal', 3000.00, 42000.00, 'Bank of India');
+
+INSERT INTO transactions (trans_id, account_id, txn_date, type, txn_amount, balance, bank_name) VALUES
+(100041, 7334, '2024-02-10', 'Deposit', 7500.00, 52500.00, 'Bank of Maharashtra'),
+(100042, 8291, '2024-02-11', 'Withdrawal', 3500.00, 49000.00, 'Canara Bank'),
+(100043, 9456, '2024-02-12', 'Withdrawal', 2000.00, 47000.00, 'Central Bank of India'),
+(100044, 1572, '2024-02-13', 'Deposit', 8500.00, 55500.00, 'Corporation Bank'),
+(100045, 2769, '2024-02-14', 'Withdrawal', 4000.00, 51500.00, 'Dena Bank'),
+(100046, 3865, '2024-02-15', 'Deposit', 7000.00, 58500.00, 'Indian Bank'),
+(100047, 4723, '2024-02-16', 'Withdrawal', 3500.00, 55000.00, 'Indian Overseas Bank'),
+(100048, 5897, '2024-02-17', 'Withdrawal', 2500.00, 52500.00, 'IDBI Bank'),
+(100049, 6884, '2024-02-18', 'Deposit', 9500.00, 62000.00, 'Oriental Bank of Commerce'),
+(100050, 7992, '2024-02-19', 'Withdrawal', 3000.00, 59000.00, 'Punjab National Bank');
+
+
+INSERT INTO transactions (trans_id, account_id, txn_date, type, txn_amount, balance, bank_name) VALUES
+(100051, 8326, '2024-02-20', 'Deposit', 8000.00, 67000.00, 'State Bank of India'),
+(100052, 9342, '2024-02-21', 'Withdrawal', 3500.00, 63500.00, 'Syndicate Bank'),
+(100053, 1657, '2024-02-22', 'Deposit', 9000.00, 72500.00, 'UCO Bank'),
+(100054, 2798, '2024-02-23', 'Withdrawal', 4000.00, 68500.00, 'Union Bank of India'),
+(100055, 3875, '2024-02-24', 'Withdrawal', 3000.00, 65500.00, 'United Bank of India'),
+(100056, 4773, '2024-02-25', 'Deposit', 8500.00, 74000.00, 'Vijaya Bank'),
+(100057, 5812, '2024-02-26', 'Withdrawal', 2000.00, 72000.00, 'Yes Bank'),
+(100058, 6882, '2024-02-27', 'Withdrawal', 4500.00, 67500.00, 'Axis Bank'),
+(100059, 7996, '2024-02-28', 'Deposit', 9500.00, 77000.00, 'ICICI Bank'),
+(100060, 9037, '2024-02-29', 'Withdrawal', 5000.00, 72000.00, 'HDFC Bank');
+
+
+INSERT INTO transactions (trans_id, account_id, txn_date, type, txn_amount, balance, bank_name) VALUES
+(100031, 1234, '2023-12-20', 'Deposit', 5000.00, 50000.00, 'State Bank of India'),
+(100032, 2345, '2023-12-25', 'Withdrawal', 2000.00, 48000.00, 'HDFC Bank'),
+(100033, 3456, '2023-12-30', 'Deposit', 8000.00, 56000.00, 'ICICI Bank'),
+(100034, 4567, '2023-12-31', 'Withdrawal', 3000.00, 53000.00, 'Axis Bank');
+
+INSERT INTO transactions (trans_id, account_id, txn_date, type, txn_amount, balance, bank_name) VALUES
+(100021, 5678, '2022-12-15', 'Deposit', 7000.00, 60000.00, 'Bank of Baroda'),
+(100022, 6789, '2022-12-20', 'Withdrawal', 4000.00, 56000.00, 'Union Bank of India'),
+(100023, 7890, '2022-12-25', 'Deposit', 6000.00, 62000.00, 'State Bank of India'),
+(100024, 8901, '2022-12-31', 'Withdrawal', 3500.00, 58500.00, 'HDFC Bank');
+
+INSERT INTO transactions (trans_id, account_id, txn_date, type, txn_amount, balance, bank_name) VALUES
+(100035, 9876, '2023-01-05', 'Deposit', 3000.00, 56000.00, 'ICICI Bank'),
+(100036, 8765, '2023-01-10', 'Withdrawal', 2500.00, 53500.00, 'Axis Bank'),
+(100037, 7654, '2023-01-15', 'Deposit', 4000.00, 57500.00, 'Bank of Baroda'),
+(100038, 6543, '2023-01-20', 'Withdrawal', 1500.00, 56000.00, 'Union Bank of India');
+
+INSERT INTO transactions (trans_id, account_id, txn_date, type, txn_amount, balance, bank_name) VALUES
+(100041, 1234, '2024-01-05', 'Deposit', 3500.00, 54000.00, 'State Bank of India'),
+(100042, 2345, '2024-01-10', 'Withdrawal', 2000.00, 52000.00, 'HDFC Bank'),
+(100043, 3456, '2024-01-15', 'Deposit', 5000.00, 57000.00, 'ICICI Bank'),
+(100044, 4567, '2024-01-20', 'Withdrawal', 1800.00, 55200.00, 'Axis Bank');
+
+INSERT INTO transactions (trans_id, account_id, txn_date, type, txn_amount, balance, bank_name) VALUES
+(100039, 5432, '2023-01-25', 'Deposit', 3200.00, 59200.00, 'Punjab National Bank'),
+(100040, 6543, '2023-01-30', 'Withdrawal', 1700.00, 57500.00, 'Bank of Baroda'),
+(100041, 7654, '2023-02-05', 'Deposit', 4100.00, 61600.00, 'Union Bank of India'),
+(100042, 8765, '2023-02-10', 'Withdrawal', 2200.00, 59400.00, 'IDBI Bank'),
+(100043, 9876, '2023-02-15', 'Deposit', 4500.00, 63900.00, 'Bank of Maharashtra'),
+(100044, 1234, '2023-02-20', 'Withdrawal', 2800.00, 61100.00, 'Canara Bank'),
+(100045, 2345, '2023-02-25', 'Deposit', 3700.00, 64800.00, 'Indian Overseas Bank'),
+(100046, 3456, '2023-03-05', 'Withdrawal', 1900.00, 62900.00, 'Central Bank of India'),
+(100047, 4567, '2023-03-10', 'Deposit', 4900.00, 67800.00, 'UCO Bank'),
+(100048, 5678, '2023-03-15', 'Withdrawal', 2400.00, 65400.00, 'Bank of India'),
+(100049, 6789, '2023-03-20', 'Deposit', 5200.00, 70600.00, 'IDFC First Bank'),
+(100050, 7890, '2023-03-25', 'Withdrawal', 2000.00, 68600.00, 'Kotak Mahindra Bank'),
+(100051, 8901, '2024-01-25', 'Deposit', 3800.00, 59000.00, 'Yes Bank'),
+(100052, 9012, '2024-01-30', 'Withdrawal', 2600.00, 56400.00, 'IndusInd Bank'),
+(100053, 9123, '2024-02-05', 'Deposit', 4300.00, 60700.00, 'RBL Bank'),
+(100054, 9234, '2024-02-10', 'Withdrawal', 2100.00, 58600.00, 'Bandhan Bank'),
+(100055, 9345, '2024-02-15', 'Deposit', 4600.00, 63200.00, 'Federal Bank'),
+(100056, 9456, '2024-02-20', 'Withdrawal', 2900.00, 60300.00, 'South Indian Bank'),
+(100057, 9567, '2024-02-25', 'Deposit', 4000.00, 64300.00, 'Nainital Bank'),
+(100058, 9678, '2024-03-05', 'Withdrawal', 1700.00, 62600.00, 'Jammu & Kashmir Bank'),
+(100059, 9789, '2024-03-10', 'Deposit', 5100.00, 67700.00, 'Karur Vysya Bank'),
+(100060, 9890, '2024-03-15', 'Withdrawal', 2300.00, 65400.00, 'City Union Bank'),
+(100061, 9901, '2024-03-20', 'Deposit', 5500.00, 70900.00, 'DCB Bank'),
+(100062, 9912, '2024-03-25', 'Withdrawal', 1800.00, 69100.00, 'Lakshmi Vilas Bank');
+
+
+SELECT * FROM transactions;
+
+
+
+-- Q. Help me see the count of deposits, withdrawls, sum of deposits and withdrawls across banks across year an Quarter
+
+select 
+    Bank_name,
+    Year(TXN_DATE) as Year,
+    Quarter(TXN_DATE) as Qtr_no,
+    count(case when Type = 'Withdrawal' Then 1 end) as withdrawal_counts,
+    count(case when Type = 'Deposit' then 1 end) as deposit_counts,
+    sum(case when Type = 'Withdrawal' then txn_amount else 0 end) as sum_of_withdrawals,
+    sum(case when Type = 'Deposit' then txn_amount else 0 end) as sum_of_deposits
+from transactions
+group by bank_name,Year,Qtr_no
+order by 1,year asc,qtr_no asc;
+    
+
+
+
+-- system functions()
+
+select current_date()
+select current_user()
+select current_role()
+select current_region()
