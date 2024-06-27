@@ -1,0 +1,69 @@
+CREATE DATABASE SNOWFLAKE_PYTHON;
+
+pip install snowflake-connector-python
+
+import snowflake.connector as sf
+import pandas as pd
+
+
+user = '  '
+password = ' '
+account = 'sopzwxf-ikb58509'
+database = 'SNOWFLAKE_PYTHON'
+warehouse = 'COMPUTE_WH'
+schema = 'PUBLIC'
+role = 'ACCOUNTADMIN'
+
+conn = sf.connect(user = user,password = password, account = account)
+
+def run_query(connection,querry):
+    cursor = connection.cursor()
+    cursor.execute(querry)
+    cursor.close()
+
+
+
+-- Creating a table:
+
+query = '''CREATE OR REPLACE  TABLE transactions
+(trans_id INT,
+account_id INT,
+txn_date DATE,
+type VARCHAR(20),
+txn_amount DECIMAL(10, 2),
+balance DECIMAL(10, 2),
+bank_name VARCHAR(100)
+)'''
+
+run_query(conn,query)
+
+
+# Lets insert certain records
+
+query = '''
+INSERT INTO transactions (trans_id, account_id, txn_date, type, txn_amount, balance, bank_name) VALUES
+(100001, 1234, '2024-01-01', 'Withdrawal', 5000.00, 10000.00, 'State Bank of India'),
+(100002, 5678, '2024-01-02', 'Deposit', 8000.00, 18000.00, 'HDFC Bank'),
+(100003, 9876, '2024-01-03', 'Withdrawal', 3000.00, 15000.00, 'ICICI Bank'),
+(100004, 2468, '2024-01-04', 'Withdrawal', 2500.00, 12500.00, 'Axis Bank'),
+(100005, 1357, '2024-01-05', 'Deposit', 6000.00, 18500.00, 'Kotak Mahindra Bank'),
+(100006, 8642, '2024-01-06', 'Withdrawal', 4500.00, 14000.00, 'IndusInd Bank'),
+(100007, 9753, '2024-01-07', 'Deposit', 7000.00, 21000.00, 'Yes Bank'),
+(100008, 3698, '2024-01-08', 'Withdrawal', 3500.00, 17500.00, 'Federal Bank'),
+(100009, 7412, '2024-01-09', 'Withdrawal', 2000.00, 15500.00, 'Canara Bank'),
+(100010, 8523, '2024-01-10', 'Deposit', 5500.00, 21000.00, 'Punjab National Bank'),
+(100011, 9634, '2024-01-11', 'Withdrawal', 4000.00, 17000.00, 'Bank of Baroda'),
+(100012, 1596, '2024-01-12', 'Withdrawal', 3500.00, 13500.00, 'IDBI Bank'),
+(100013, 3579, '2024-01-13', 'Deposit', 7000.00, 20500.00, 'UCO Bank'),
+(100014, 4681, '2024-01-14', 'Withdrawal', 2500.00, 18000.00, 'Bandhan Bank'),
+(100015, 5829, '2024-01-15', 'Withdrawal', 3000.00, 15000.00, 'Central Bank of India'),
+(100016, 6932, '2024-01-16', 'Deposit', 9000.00, 24000.00, 'Indian Bank'),
+(100017, 7254, '2024-01-17', 'Withdrawal', 4000.00, 20000.00, 'Oriental Bank of Commerce'),
+(100018, 8471, '2024-01-18', 'Withdrawal', 3500.00, 16500.00, 'Union Bank of India'),
+(100019, 9623, '2024-01-19', 'Deposit', 7500.00, 24000.00, 'State Bank of Patiala'),
+(100020, 2746, '2024-01-20', 'Withdrawal', 2000.00, 22000.00, 'Bank of Maharashtra');
+'''
+
+run_query(conn,query)
+    
+
