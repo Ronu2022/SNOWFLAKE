@@ -1,0 +1,348 @@
+select * from user; -- User Table provided
+select * from event; -- Event Table Provided.
+
+select count(distinct userid) from event;--82,665 -- distinct User Count
+select count(distinct userid) from user; -- 74,755 -- distinct User Count
+
+-- Checking by timestamp: based on the latest record.
+
+select * from user;
+(
+with cte as
+(
+select
+    userid,
+    eventid, 
+    timestamp,
+    event,
+    source
+from event
+qualify row_number() over(partition by userid order by timestamp desc) = 1
+  ) select * from cte
+) ; 
+
+
+
+select * from view_recentEventData;
+
+--  FROM USER TABLE
+
+with filtered_users as
+(
+with last_record_users as
+	(
+	   SELECT *,
+	ROW_NUMBER() OVER (PARTITION BY USERID ORDER BY LEAD_CREATED_DATE DESC, opprtunity_created_date desc AS rn
+			  FROM User
+	) select * from last_record_users where RN IN (1,2) -- at first checked with 1 and 2, later sticked with 2
+) select * from filtered_users;
+
+
+-----------------------------------------------------------------------------------------------------------------------------
+-- CREATION OF A MASTER TABLE : For analysis in Power BI
+
+create view master_table_part1  as
+(
+with master_file_joined_1 as
+(
+with filtered_users as
+(
+with last_record_users as
+(
+   SELECT 
+        *,ROW_NUMBER() OVER (PARTITION BY USERID ORDER BY LEAD_CREATED_DATE DESC, opprtunity_created_date desc) AS rn
+          FROM User
+) select * from last_record_users where RN IN (1)
+),
+filtered_event_data as
+(
+    select
+    userid,
+    eventid, 
+    timestamp,
+    event,
+    source
+from event
+qualify row_number() over(partition by userid order by timestamp desc) = 1
+)
+select u.userid,e.source, u.leadstatus,u.opportunity_status,
+       u.province, u.lead_created_date, u.opprtunity_created_date,
+       u.portfolio, u.funding_date,u.requested_loan_amount,
+       u.approved_loan_amount
+from  filtered_users u 
+left join filtered_event_data e
+on u.userid = e.userid
+) select * from master_file_joined_1
+);
+
+
+select * from master_table_part1;
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+-- WE WOULD NEED TO ADD CERTAIN ELEMENTS TO THE MASTER TABLE LIKE  A USER COMING FROM 1 SOURCE OR MULTIPLE SIOURCES:
+               COUNT(DISTINCT eventid) AS interaction_count
+        FROM path_cte
+        group by userid ORDER BY interaction_count
+) SELECT steps, COUNT(DISTINCT userid) AS steps_occurence FROM steps_count 
+  GROUP BY steps ORDER BY steps_occurence DESC
+
+);
+
+
+ SELECT * FROM view_steps_count;
+
+
+ 
+ 
+ -- Interaction COunt = Distinct Event IDs per user.
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+-- USERID and COUNT OF INTERACTION:
+
+
+WITH event_count_associated as
+(
+    SELECT  ROW_NUMBER() OVER (PARTITION BY userid ORDER BY timestamp ASC) AS event_sequence,
+            userid,timestamp,eventid,event 
+    FROM event
+    
+)SELECT userid, COUNT(DISTINCT eventid) AS no_of_interaction 
+ FROM event_count_associated GROUP BY  userid; -- table with userid and count of interaction 
+
+
+
+ -- VIEW WITH DISTINCT SOURCES
+ 
+CREATE OR REPLACE VIEW view_source AS
+(
+    SELECT DISTINCT source FROM event
+);
+
+-- VIEW WITH DISTINCT PROVINCES
+
+CREATE OR REPLACE VIEW view_province AS
+(
+    SELECT DISTINCT province FROM USER
+);
+
+
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- MASTERTABLE_2
+(
+WITH cte1 AS
+(
+    SELECT * FROM master_table_part1
+),
+ cte2 AS
+(
+  SELECT * FROM VIEW_USERID_STEPS_INTERACTIONS
+)
+    SELECT 
+            m.userid, m.source, s.steps, s.interaction_count,m.leadstatus,
+            m.OPPORTUNITY_STATUS,m.province,m.lead_created_date,
+            m.opprtunity_created_date, m.portfolio,m.funding_date,
+            m.requested_loan_amount,m.approved_loan_amount
+    FROM cte1 m LEFT JOIN cte2 s
+    ON m.userid = s.userid
+);
+
+
+SELECT * FROM master_table_part2;
+
+SELECT COUNT(*) FROM master_table_part2; -- 74,755
+SELECT COUNT(DISTINCT userid) from master_table_part2; -- 74,755
+
+
+create view  view_userid  as
+(
+select distinct userid from user
+);
+
+
+
+CREATE VIEW  view_eventid_event AS
+SELECT DISTINCT eventid, event from event;
+
+-- count* = 87,283
+-- count distinct id : 74755
+
+
+-- INTERACTION COUNT OF USERS, PERCENTILE_CONT
+
+SELECT 
+        PERCENTILE_CONT(0.25)  WITHIN GROUP (ORDER BY INTERACTION_COUNT) AS p25,
+        PERCENTILE_CONT(0.50)  WITHIN GROUP (ORDER BY INTERACTION_COUNT) AS p50,
+        PERCENTILE_CONT(0.75)  WITHIN GROUP (ORDER BY INTERACTION_COUNT) AS p75
+FROM master_table_part2;
+
+/*P25 : 4.000
+p50: 11.000
+p75: 17.000*/
+
+-- We can use this to find or classify users based on their interaction: Highly engaged or low engaged users. 
+       
+
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+select * from master_table_part2;
+FROM event
+GROUP BY source
+ORDER BY user_count DESC;
+
+/*
+
+TOP 5 
+-- LoansCanada - 31,056
+-- null - 24,762
+-- email - 11,334
+
+Bottom : 
+-- TestQuiz - 1
+-- blog,blog - 1
+-- LoansCanadaEmail - 1
+-- PLAA - 1
+
+*/
+
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- COHORT ANALYSIS:
+
+  -- How many users are returning back after first vist . 
+
+
+
+-- let's check the number of users per WEEK:
+
+WITH weekly_users as
+(
+    SELECT userid, MIN(timestamp) AS earliest_date
+    FROM event GROUP BY userid
+) 
+    SELECT DATE_TRUNC('week', earliest_date) AS week_reference, 
+           COUNT(DISTINCT userid)
+    FROM weekly_users GROUP BY 1 ORDER BY 1 ASC;
+
+
+-- COHORT ANALYSIS AND Trend:
+
+                DATE_TRUNC('week', first_visit_date) AS cohort_week,
+                COUNT(DISTINCT userid) AS cohort_size
+            FROM first_visit
+            GROUP BY DATE_TRUNC('week', first_visit_date)
+        ),
+        subsequent_visits AS 
+        (
+            SELECT 
+                fv.userid,
+                DATE_TRUNC('week', fv.first_visit_date) AS cohort_week,
+                DATE_TRUNC('week', e.timestamp) AS visit_week
+            FROM event e
+            JOIN first_visit fv ON e.userid = fv.userid
+            WHERE e.timestamp > fv.first_visit_date
+        ) 
+        SELECT 
+            c.cohort_week,
+            sv.visit_week,
+            COUNT(DISTINCT sv.userid) AS returning_users,
+            c.cohort_size,
+            (COUNT(DISTINCT sv.userid) * 1.0 / c.cohort_size) AS retention_rate
+        FROM cohorts c
+        LEFT JOIN subsequent_visits sv ON c.cohort_week = sv.cohort_week
+        GROUP BY c.cohort_week, sv.visit_week, c.cohort_size
+        ORDER BY c.cohort_week, sv.visit_week
+    
+        ) select (cohort_week::date) as Week_start, 
+                 cohort_size,
+                 round(avg(retention_rate),2) as retention_rate
+          From retention_rate_cte 
+          group by cohort_week,cohort_size order by week_start asc
+    );
+
+
+SELECT * FROM VIEW_COHORT_ANALYSIS;
+
+Select * from event;
+
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+-- EVENT TABLE WITH CURRENT _EVENT, PREVIOUS_EVENT and TIME_DIFF: 
+
+WITH FILTERED_USER_SPEND_TIME AS
+
+(
+
+     SELECT * FROM VIEW_USER_TOTAL_TIME_SPENT
+     WHERE TOTAL_TIME_SPENT_ON_PLATFORM > 0 -- because w wish to eliminate the ones with 0 spent time
+
+),
+PERCENTILES AS
+(
+    SELECT PERCENTILE_CONT(0.25) WITHIN GROUP (ORDER BY TOTAL_TIME_SPENT_ON_PLATFORM) as p25,
+           PERCENTILE_CONT(0.50) WITHIN GROUP (ORDER BY TOTAL_TIME_SPENT_ON_PLATFORM) AS p50,
+           PERCENTILE_CONT(0.75) WITHIN GROUP (ORDER BY TOTAL_TIME_SPENT_ON_PLATFORM) AS p75
+    FROM FILTERED_USER_SPEND_TIME
+)SELECT * FROM PERCENTILES;
+
+/*p25 - 750.000
+p50 - 1852.000
+p75 - 12861.000
+
+NOw we can calssify all users based on the same 
+Low Engaged: Users with total time spent >0 and ≤ p25.
+Medium Low Engaged: Users with total time spent > p25 and ≤ p50.
+Medium High Engaged: Users with total time spent > p50 and ≤ p75.
+High Engaged: Users with total time spent > p75.
+*/ 
+
+-- So we got to add column into the  table VIEW_USER_TOTAL_TIME_SPENT
+
+SELECT * FROM VIEW_USER_TOTAL_TIME_SPENT;
+
+CREATE OR REPLACE VIEW VIEW_USER_TOTAL_TIME_SPENT_ENGAGEMENT_TYPE AS
+(
+SELECT *, 
+       CASE WHEN TOTAL_TIME_SPENT_ON_PLATFORM = 0 THEN 'No Engagement'
+            WHEN TOTAL_TIME_SPENT_ON_PLATFORM > 0 and TOTAL_TIME_SPENT_ON_PLATFORM <= 750.00 THEN 'Low Engagement'
+            WHEN TOTAL_TIME_SPENT_ON_PLATFORM > 750.00 and TOTAL_TIME_SPENT_ON_PLATFORM <= 1852.00 THEN 'Mid Engagement'
+            WHEN TOTAL_TIME_SPENT_ON_PLATFORM >1852.00  and TOTAL_TIME_SPENT_ON_PLATFORM <= 12861.000 THEN 'Mid-high Engagement'
+            WHEN TOTAL_TIME_SPENT_ON_PLATFORM >12861 THEN 'Mid-high Engagement'
+            END AS Engagement_type
+FROM VIEW_USER_TOTAL_TIME_SPENT
+
+) ; 
+
+SELECT * FROM VIEW_USER_TOTAL_TIME_SPENT_ENGAGEMENT_TYPE;
+
+
+
+
+-- VIEW_event_table_time_diff_in_secs -- This was the table with current, an dpast _event time , lets put the total time spend
+-- VIEW_USER_TOTAL_TIME_SPENT --  This was the table with userids and their total tiome spent
+-- VIEW_USER_TOTAL_TIME_SPENT_ENGAGEMENT_TYPE - added with engagement_type
+
+SELECT * FROM VIEW_event_table_time_diff_in_secs;
+SELECT * FROM VIEW_USER_TOTAL_TIME_SPENT;
+SELECT * FROM VIEW_USER_TOTAL_TIME_SPENT_ENGAGEMENT_TYPE;
+
+-- CREATE EVENT MASTER TABLE
+
+Create or replace view master_event_table_TOTAL_TIME_SPENT_ENAGAGEMENT_TYPE as
+(
+
+    select 
+            e.eventid,e.event,e.userid,t.total_time_spent_on_platform,t.Engagement_type ,e.current_event,e.previous_event,   
+            e.time_diff_in_secs, e.source       
+    FROM VIEW_event_table_time_diff_in_secs e
+    JOIN VIEW_USER_TOTAL_TIME_SPENT_ENGAGEMENT_TYPE t
+    ON e.userid = t.userid
+);
+
+
+--------------------------------------------------------------------------------------------------------------------------------------------------
