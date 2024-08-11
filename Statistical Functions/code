@@ -1,0 +1,270 @@
+CREATE DATABASE statistical_functions;
+CREATE SCHEMA functions_schema;
+USE SCHEMA functions_schema;
+
+CREATE OR REPLACE TABLE loans_data 
+(
+    loan_id INT,
+    loan_amount DECIMAL(10,2),
+    interest_rate DECIMAL(5, 2),
+    default_rate DECIMAL(5, 2),
+    loan_source STRING,
+    loan_date DATE,
+    risk_score INT
+);
+
+INSERT INTO loans_data (loan_id, loan_amount, interest_rate, default_rate, loan_source, loan_date, risk_score) VALUES
+(1, 10000.00, 5.5, 0.02, 'Bank A', '2023-01-15', 700),
+(2, 15000.00, 6.0, 0.05, 'Bank B', '2023-02-01', 650),
+(3, 5000.00, 4.5, 0.01, 'Bank A', '2023-03-10', 720),
+(4, 20000.00, 7.0, 0.08, 'Credit Union X', '2023-04-20', 600),
+(5, 12000.00, 5.0, 0.03, 'Bank C', '2023-05-15', 680),
+(6, 8000.00, 4.8, 0.02, 'Credit Union Y', '2023-06-01', 710),
+(7, 16000.00, 6.5, 0.06, 'Bank B', '2023-07-10', 640),
+(8, 9000.00, 5.3, 0.04, 'Bank A', '2023-08-15', 690);
+
+
+SELECT * FROM loans_data;
+
+
+-- COVAR_POP():
+
+/*
+-- "population covariance"
+--  statistical function that measures the relationship between two variables.
+-- Positive Covariance: 
+        If both variables increase together (or decrease together), the covariance is positive. 
+        For example, if higher loan amounts are usually associated with higher interest rates, the covariance will be positive.
+-- Negative Covariance:
+        If one variable increases while the other decreases, the covariance is negative. 
+        For example, if higher loan amounts are associated with lower interest rates, the covariance will be negative.
+-- Zero Covariance: 
+        If there’s no consistent pattern between the variables (one increases while the other doesn’t show any particular pattern), 
+        the covariance will be close to zero.
+
+-- Population vs. Sample Covariance
+    
+    Population Covariance (COVAR_POP): 
+        This calculates the covariance based on the entire population of your data. 
+        You use this when you have data for the whole group you're studying.
+        When to use: You have financial data for all loans issued by a bank in a particular year, and you want to analyze how loan amounts and                          interest rates are related for this entire set of data. Since you're looking at the complete population of loans,
+                     COVAR_POP is appropriate.
+
+
+    Sample Covariance (COVAR_SAMP): 
+        This calculates the covariance based on a sample of the population. 
+        You use this when you only have a subset of the entire group.
+        When to use: You have data on loan amounts and interest rates from a sample of loans issued by several banks, and you want to understand                        how these variables are related in the context of all loans issued by these banks. Since you only have a sample, 
+                     COVAR_SAMP is appropriate for making generalizations about the broader population of loans.
+*/
+
+
+SELECT * FROM loans_data;
+
+SELECT COVAR_POP(loan_amount,interest_rate) AS pop_covariance FROM loans_data; -- 3496.875
+SELECT COVAR_SAMP(loan_amount,interest_rate) AS sam_covariance FROM loans_data; -- 3996.428 -- difference is because of denominator in the formula.
+-- in pop: it is n and in samp it is (n-1) => which is basel's correction
+-- 3496.875 is +ve which is there is an increase  i.e if loan_amount increases then interest_rate increases.
+    -- but it effectively doesnt say if that is high or low so, Pearson Correlation Coefficient
+    -- Pearson Corelation Coefficient = Covariance(x,y)/stddev(x) * stddev(y)
+
+SELECT STDDEV_POP(loan_amount) as std_loan FROM loans_data; -- 4567.20
+SELECT STDDEV_POP(interest_rate) AS std_interest FROM loans_data; -- 0.8089
+
+
+
+
+
+-- PEARSON CORRELATION COEFFICIENT:
+
+SELECT COVAR_POP(loan_amount,interest_rate)/(STDDEV_POP(loan_amount) * STDDEV_POP(interest_rate)) AS cor_coeff FROM loans_data; -- 0.94
+/*
+Interpretation of r:
+
+0.1 to 0.3: Weak positive correlation.
+0.3 to 0.5: Moderate positive correlation.
+0.5 to 1.0: Strong positive correlation.
+-0.1 to -0.3: Weak negative correlation.
+-0.3 to -0.5: Moderate negative correlation.
+-0.5 to -1.0: Strong negative correlation
+*/
+
+
+
+
+
+-- corr(): 
+
+    -- Essentially pearson correlation coefficient. 
+
+SELECT CORR(loan_amount,interest_rate) FROM loans_data; -- 0.946
+
+
+
+-- Percentile_disc(): 
+
+   /* 
+   Think of It Like: Picking a number directly from your list.
+
+How It Works: You look at your list of numbers and find the one that is closest to where 70% of the numbers fall.
+
+For example:
+
+If 70% of the numbers in the list should fall below a certain value, you would pick the number from the list that is closest to this value.
+Example:
+
+Your list: [2, 4, 6, 8, 10]
+If you calculate the 70th percentile, you might find that it falls between 6 and 8. 
+
+PERCENTILE_DISC would return 6, because 6 is the closest number in your list to that position.
+
+*/
+
+SELECT PERCENTILE_DISC(0.9) WITHIN GROUP (ORDER BY interest_rate) AS p_90 FROM loans_data; -- 7.00
+-- means 90 % data points are <= 7.00
+SELECT PERCENTILE_DISC(0.75) WITHIN GROUP (ORDER BY interest_rate) AS p_75 FROM loans_data; -- 6.00
+SELECT PERCENTILE_DISC(0.50) WITHIN GROUP (ORDER BY interest_rate) AS p_50 FROM loans_data; -- 5.30
+
+
+
+SELECT DISTINCT(interest_rate) as dint FROM loans_data; -- 5.50,6.00,4.50,7.00,5.00,4.80,6.50,5.30
+
+-- Percentile_disc gives values from these  if you wish precision then you got to use percentile_cont()
+
+
+-- percentile_cont():
+
+SELECT PERCENTILE_CONT(0.9) WITHIN GROUP (ORDER BY interest_rate) AS p_90 FROM loans_data;  -- 6.6500
+SELECT PERCENTILE_CONT(0.75) WITHIN GROUP(ORDER BY interest_rate) AS p_75 FROM loans_data; -- 6.12500
+SELECT PERCENTILE_CONT(0.50) WITHIN GROUP (ORDER BY interest_rate) AS p_50 FROM loans_data; -- 5.4
+
+
+
+
+
+
+
+-- ntile():
+
+SELECT 
+    loan_id, risk_score,
+    NTILE(4) OVER (ORDER BY risk_score DESC) AS risk_quartile 
+FROM loans_data;
+
+
+
+-- lag(): 
+
+SELECT loan_id, interest_rate, 
+       LAG(interest_rate, 1)  OVER (ORDER BY loan_date ASC) AS prev_interest_rate
+FROM loans_data;
+
+
+
+-- lead(): 
+
+SELECT loan_id, risk_score, 
+       LEAD(interest_rate, 1) OVER (ORDER BY loan_date ASC) AS upcoming_interest_rate
+FROM loans_data;
+
+
+-- ratio_to_report(): 
+
+/*Think of It Like: Finding the Proportion of Each Item
+
+Definition: RATIO_TO_REPORT calculates the proportion (or percentage) of each value compared to the total of its group.*/
+
+
+SELECT loan_source, loan_amount,
+       RATIO_TO_REPORT(loan_amount) OVER(PARTITION BY loan_source ORDER BY loan_amount) AS loan_ratio
+FROM loans_data;
+
+
+
+
+
+
+-- regr_slope():
+
+/*
+
+What is REGR_SLOPE?
+Think of It Like: Finding the Steepness of a Line
+
+Definition: REGR_SLOPE calculates the slope of the best-fit line in a linear regression. 
+This line shows how one variable (e.g., loan_amount) changes in relation to another variable (e.g., default_rate).
+
+Imagine you have two variables:
+
+loan_amount: Amount of loan.
+default_rate: Rate at which loans default.
+If you plot these variables on a graph:
+
+Positive Slope: If the line goes up as you move to the right, it means higher loan amounts are associated with higher default rates.
+Negative Slope: If the line goes down as you move to the right, it means higher loan amounts are associated with lower default rates.
+Zero Slope: If the line is flat, there is no change in the default rate as loan amounts increase.
+
+CORR
+Purpose: Measures the strength and direction of the linear relationship between two variables.
+
+Function: CORR(x, y) calculates the Pearson correlation coefficient, which ranges from -1 to 1.
+
+Output: Provides a value that indicates how strongly x and y are related:
+    1: Perfect positive linear relationship.
+    -1: Perfect negative linear relationship.
+    0: No linear relationship.
+
+Key Differences
+
+What They Measure:
+
+REGR_SLOPE: 
+
+    Gives you the slope of the best-fit line, telling you how much y changes for a unit change in x. 
+    It’s about the rate of change.
+    
+CORR:
+    Measures the strength and direction of the linear relationship between x and y. 
+    It’s about the degree of association.
+
+Relation to Each Other:
+
+Slope and Correlation: 
+
+The correlation coefficient (CORR) tells you how strong the relationship is, while the 
+slope (REGR_SLOPE) tells you how steep the relationship is. 
+
+A strong correlation does not necessarily mean a steep slope, and vice versa.
+
+Example
+Consider the following scenarios:
+
+Positive Correlation with Moderate Slope:
+
+CORR: High positive value (e.g., 0.8), indicating a strong positive relationship.
+REGR_SLOPE: Positive slope value (e.g., 0.3), indicating a moderate increase in y as x increases.
+
+High Correlation with Steep Slope:
+
+CORR: High positive value (e.g., 0.9), indicating a very strong positive relationship.
+REGR_SLOPE: Steep positive slope (e.g., 2.0), indicating a large increase in y with each unit increase in x.
+
+
+
+*/
+
+SELECT REGR_SLOPE(default_rate, loan_amount) AS slope FROM loans_data; -- 0.0000045468 => close to 0
+
+-- there is a very slight increase in the default_rate as the loan_amount increases. 
+-- For each additional unit of loan_amount, the default_rate increases by only a very small amount.
+-- In practical terms, this means that changes in loan_amount have almost no effect on default_rate.
+
+SELECT CORR(default_rate,loan_amount) AS corr_rel FROM loans_data; -- 0.942
+
+
+
+
+
+
+
+
