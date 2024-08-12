@@ -1,0 +1,197 @@
+CREATE DATABASE data_cleaning;
+CREATE SCHEMA data_cleaning_schema;
+
+
+CREATE OR REPLACE TABLE user_events
+(
+    user_id NUMBER,
+    event_id NUMBER,
+    event_description VARCHAR(255),
+    event_timestamp TIMESTAMP,
+    event_source VARCHAR(50)
+);
+
+
+INSERT INTO user_events (user_id, event_id, event_description, event_timestamp, event_source) VALUES
+(1, 101, 'Filled Up Form', '2024-08-01 12:45:00', 'Web'),
+(2, 102, 'Submitted Form', '2024-08-01 13:00:00', 'Mobile'),
+(3, 103, NULL, '2024-08-01 13:15:00', 'Web'),  -- Missing event description
+(4, 104, 'Filled Up Form', '2024-08-01 14:00:00', NULL),  -- Missing event source
+(NULL, 105, 'Submitted Form', '2024-08-01 14:30:00', 'Web'),  -- Missing user ID
+(5, 106, 'Clicked on Ad', '2024-08-01 15:00:00', 'Web'),
+(6, 107, 'Submitted Form', '2024-08-01 15:30:00', 'Mobile'),
+(3, 108, 'Filled Up Form', '2024-08-01 13:15:00', 'Web');  -- Potential duplicate
+
+
+
+SELECT * FROM user_events;
+
+
+-- Data Cleaning Processes
+    -- a. Handling Missing Values:
+          -- Identify Missing Values:
+                SELECT * FROM user_events WHERE user_id IS NULL 
+                                          OR event_description IS NULL
+                                          OR event_timestamp IS NULL
+                                          OR event_source IS NULL;
+
+
+         -- Impute or Remove Missing Values:
+
+                UPDATE user_events 
+                    SET event_description = 'Unknown Event'
+                    WHERE event_description IS NULL; 
+
+SELECT * FROM user_events;
+
+-- Remove rows where user_id is NULL (since user_id is crucial for tracking:
+
+DELETE FROM user_events WHERE user_id IS NULL; 
+
+-- b. Handling Invalid Data
+    -- Since the TIMESTAMP data type automatically prevents invalid timestamps, we focus on data type issues, such as non-numeric user IDs.
+ -- 1.Identifying Data Type Mismatches:
+ SELECT * FROM user_events WHERE TRY_TO_NUMBER(user_id) IS NULL AND user_id IS NOT NULL; 
+
+
+--c. Standardizing Data Formats
+-- Standardizing Date Formats:
+
+-- Ensuring all timestamps are stored in UTC, assuming some data might be in different time zones:
+
+UPDATE user_events
+SET event_timestamp = CONVERT_TIMEZONE('America/Toronto', 'UTC', event_timestamp);
+
+
+-- Standardizing Event Descriptions:
+--Convert all event descriptions to lowercase for consistency:
+
+UPDATE user_events
+SET event_description = LOWER(event_description);
+
+
+-- d. Removing Duplicates
+-- Identifying Duplicates:
+
+-- Find duplicate records based on 
+
+
+-- checking duplicates:
+
+SELECT user_id, event_id, event_description, event_timestamp, event_source, COUNT(*) as total_count
+FROM user_events
+GROUP BY 1,2,3,4,5
+HAVING COUNT(*) > 1;
+
+WITH  duplicate_cte AS
+(
+    SELECT ROW_NUMBER() OVER(PARTITION BY user_id, event_id, event_description, event_timestamp, event_source ORDER BY user_id ) AS row_num,
+    user_id, event_id, event_description, event_timestamp, event_source FROM user_events 
+)SELECT * FROM duplicate_cte;  -- checking duplicates
+
+
+
+-- deleting duplicates: 
+
+WITH duplicate_cte AS (
+    SELECT 
+        ROW_NUMBER() OVER (
+            PARTITION BY user_id, event_id, event_description, event_timestamp, event_source
+            ORDER BY user_id -- Adjust if needed
+        ) AS row_num,
+        user_id, event_id, event_description, event_timestamp, event_source
+    FROM user_events
+)
+DELETE FROM user_events
+USING duplicate_cte
+WHERE user_events.user_id = duplicate_cte.user_id
+  AND user_events.event_id = duplicate_cte.event_id
+  AND user_events.event_description = duplicate_cte.event_description
+  AND user_events.event_timestamp = duplicate_cte.event_timestamp
+  AND user_events.event_source = duplicate_cte.event_source
+  AND duplicate_cte.row_num > 1;  -- Deleting duplicates. 
+
+  -- But SF doesnt allow delete operation with CTEs
+
+
+
+CREATE OR REPLACE TABLE temp_table AS
+
+    SELECT * FROM 
+    (
+       SELECT ROW_NUMBER() OVER(PARTITION BY user_id, event_id, event_description, event_timestamp, event_source ORDER BY user_id ) AS row_num,
+        user_id, event_id, event_description, event_timestamp, event_source FROM user_events 
+    ) as alias_table WHERE row_num = 1; -- Table Created.
+
+
+-- First You will have to truncate the table: 
+
+TRUNCATE TABLE user_events; 
+
+-- then insert the records of the CTE
+
+INSERT INTO user_events SELECT * FROM temp_table;
+
+
+-- Handling Outliers
+-- Identifying Outliers:
+
+
+SELECT user_id, COUNT(*) AS event_count FROM user_events
+GROUP BY user_id
+HAVING COUNT(*) >
+(SELECT AVG(event_count) + 3*STDDEV(event_count) FROM (SELECT user_id, COUNT(*) AS event_count FROM user_events GROUP BY user_id));
+
+
+-- Removing Outliers:
+
+DELETE FROM user_events
+WHERE user_id IN
+(
+    SELECT user_id 
+    FROM user_events
+    GROUP BY user_id
+    HAVING COUNT(*) > (SELECT AVG(event_count) + 3*STDDEV(event_count) FROM (SELECT COUNT(*) AS event_count FROM user_events GROUP BY user_id))
+);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
