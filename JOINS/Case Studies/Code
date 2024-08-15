@@ -1,3 +1,6 @@
+-- JOINS CASE STUDIES USING  SUBQUERIES
+
+
 -- Create the departments table
 CREATE  OR REPLACE TABLE departments 
 (
