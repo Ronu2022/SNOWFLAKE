@@ -1,0 +1,200 @@
+-- Create the departments table
+CREATE  OR REPLACE TABLE departments 
+(
+    department_id INT PRIMARY KEY,
+    department_name VARCHAR(50)
+);
+-- Create the employees table
+CREATE  OR REPLACE TABLE employees (
+    employee_id INT PRIMARY KEY,
+    employee_name VARCHAR(50),
+    department_id INT,
+    FOREIGN KEY (department_id) REFERENCES departments(department_id)
+);
+-- Create the salaries table
+CREATE  OR REPLACE TABLE salaries (
+    employee_id INT,
+    salary_amount DECIMAL(10, 2),
+    payment_date DATE,
+    FOREIGN KEY (employee_id) REFERENCES employees(employee_id)
+);
+
+-- Insert records into the departments table
+INSERT INTO departments (department_id, department_name) VALUES
+(101, 'HR'),
+(102, 'IT'),
+(103, 'Finance');
+-- Insert records into the employees table
+INSERT INTO employees (employee_id, employee_name, department_id) VALUES
+(1, 'Alice', 101),
+(2, 'Bob', 102),
+(3, 'Charlie', 101),
+(4, 'Dave', 103);
+-- Insert records into the salaries table
+INSERT INTO salaries (employee_id, salary_amount, payment_date) VALUES
+(1, 5000.00, '2023-08-01'),
+(2, 4500.00, '2023-08-01'),
+(3, 5500.00, '2023-08-01'),
+(4, 6000.00, '2023-08-01');
+
+
+CREATE  OR REPLACE TABLE projects 
+( 
+    project_id INT PRIMARY KEY, 
+    project_name VARCHAR(50), 
+    department_id INT, 
+    start_date DATE, 
+    end_date DATE, 
+    FOREIGN KEY (department_id) REFERENCES departments(department_id) 
+);
+
+
+-- Insert records into the projects table
+INSERT INTO projects (project_id, project_name, department_id, start_date, end_date) VALUES
+(1, 'Project Alpha', 101, '2023-01-15', '2023-06-15'),
+(2, 'Project Beta', 102, '2023-03-01', '2023-09-01'),
+(3, 'Project Gamma', 101, '2023-04-20', '2023-12-31'),
+(4, 'Project Delta', 103, '2023-07-01', '2023-12-01');
+
+
+
+-- Question for Each of the Department, find th enumber of Employees and the total _salary 
+
+
+SELECT * FROM departments; -- department_id, department_name
+SELECT * FROM employees; -- employee_id, employee_name, department_id
+SELECT * FROM salaries; -- employee_id, salary_amount, payment_date
+
+
+SELECT dept.department_id,
+       dept. department_name,
+       emp.employee_count,
+       sal.total_salary 
+FROM 
+
+   (SELECT department_id, COUNT(*) AS employee_count FROM employees GROUP BY department_id ) emp-- department_id, employee_count
+JOIN 
+
+    (SELECT e.department_id, SUM(s.salary_amount) as total_salary FROM employees e 
+    JOIN salaries s ON e.employee_id = s.employee_id GROUP BY e.department_id ) sal-- department_id, total_salary
+    
+ON emp.department_id = sal.department_id
+
+JOIN Departments dept 
+ON emp.department_id = dept.department_id;
+
+
+
+ /*Challenge Query
+Write a SQL query to get a summary of projects with the following details:
+department_name
+total_projects (number of projects in each department)
+total_duration (total number of days for all projects in each department)*/
+
+
+SELECT * FROM departments; -- department_id, department_name
+SELECT * FROM employees; -- employee_id, employee_name, department_id
+SELECT * FROM salaries; -- employee_id, salary_amount, payment_date
+SELECT * FROM projects; -- project_id, project_name, department_id, start_date, end_date. 
+
+
+
+SELECT
+dept.department_name,
+sq1.project_count,
+sq1.days_count
+FROM
+
+(SELECT department_id, COUNT(project_id) AS project_count, SUM(DATEDIFF('day',start_date,end_date)) AS days_count
+FROM projects GROUP BY 1) sq1
+
+JOIN
+(SELECT department_id, department_name FROM departments) dept
+
+ON sq1.department_id = dept.department_id; 
+
+
+-----------------------------------------------------------------------------------------------------------------------------------------------
+
+
+
+
+-- Create projects table
+
+CREATE OR REPLACE TABLE projects 
+(
+    project_id INT PRIMARY KEY,
+    project_name VARCHAR(50),
+    start_date DATE,
+    end_date DATE
+);
+
+-- Create employees table
+
+CREATE OR REPLACE TABLE employees 
+(
+    employee_id INT PRIMARY KEY,
+    employee_name VARCHAR(50),
+    department_id INT
+);
+
+-- Create assignments table
+
+
+CREATE OR REPLACE  TABLE assignments 
+(
+    assignment_id INT PRIMARY KEY,
+    employee_id INT,
+    project_id INT,
+    FOREIGN KEY (employee_id) REFERENCES employees(employee_id),
+    FOREIGN KEY (project_id) REFERENCES projects(project_id)
+);
+
+-- Insert records into projects table
+INSERT INTO projects (project_id, project_name, start_date, end_date) VALUES
+(1, 'Project Alpha', '2023-01-15', '2023-06-15'),
+(2, 'Project Beta', '2023-03-01', '2023-09-01'),
+(3, 'Project Gamma', '2023-04-20', '2023-12-31');
+
+
+-- Insert records into employees table
+INSERT INTO employees (employee_id, employee_name, department_id) VALUES
+(1, 'Alice Smith', 101),
+(2, 'Bob Johnson', 101),
+(3, 'Charlie Brown', 102),
+(4, 'Diana Prince', 103);
+
+
+-- Insert records into assignments table
+INSERT INTO assignments (assignment_id, employee_id, project_id) VALUES
+(1, 1, 1),
+(2, 2, 1),
+(3, 3, 2),
+(4, 4, 3);
+
+
+
+/*Challenge Query
+Write a SQL query to get a summary of employees and their project assignments with the following details:
+employee_name
+project_name
+project_duration (number of days between start_date and end_date for the project)*/
+
+
+
+SELECT * FROM projects; -- project_id, project_name, start_date, end_date
+SELECT * FROM employees; -- employee_id, employee_name, department_id
+SELECT * FROM assignments;  --assign_ment, employee_id, project_id
+
+
+SELECT emp.employee_name,
+       project_duration.project_name, 
+       project_duration. project_duration
+FROM 
+
+(SELECT  project_name, project_id, SUM(DATEDIFF('DAY', start_date, end_date)) AS project_duration FROM projects GROUP BY 1,2) project_duration
+JOIN
+(SELECT employee_id, project_id FROM assignments) assn
+ON project_duration.project_id = assn.project_id
+JOIN employees emp
+ON emp.employee_id = assn.employee_id;
