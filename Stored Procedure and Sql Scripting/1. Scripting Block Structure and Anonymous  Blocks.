@@ -1,0 +1,199 @@
+CREATE OR REPLACE DATABASE stored_procedure;
+
+USE stored_procedure;
+
+CREATE OR REPLACE TABLE customer
+(
+    customer_id INT, 
+    salutation VARCHAR,
+    first_name VARCHAR, 
+    last_name VARCHAR,
+    birth_day INT, 
+    birth_month INT, 
+    birth_year INT, 
+    birth_country VARCHAR, 
+    email_address VARCHAR, 
+    cust_status VARCHAR
+) COMMENT = 'This is a simple Customer Table'; 
+
+
+
+CREATE OR REPLACE TABLE customer 
+(
+    customer_id INT PRIMARY KEY, 
+    salutation VARCHAR(10),
+    first_name VARCHAR(50), 
+    last_name VARCHAR(50),
+    birth_day INT, 
+    birth_month INT, 
+    birth_year INT, 
+    birth_country VARCHAR(50), 
+    email_address VARCHAR(100), 
+    cust_status VARCHAR(20)
+) COMMENT ='This is a simple Customer Table';
+
+
+
+INSERT INTO customer (customer_id, salutation, first_name, last_name, birth_day, birth_month, birth_year, birth_country, email_address, cust_status)
+VALUES 
+    (1, 'Mr.', 'John', 'Doe', 15, 6, 1985, 'USA', 'john.doe@example.com', 'Active'),
+    (2, 'Ms.', 'Jane', 'Smith', 22, 11, 1990, 'Canada', 'jane.smith@example.com', 'Inactive'),
+    (3, 'Dr.', 'Alice', 'Johnson', 5, 3, 1982, 'UK', 'alice.johnson@example.com', 'Active'),
+    (4, 'Mrs.', 'Emily', 'Davis', 29, 7, 1975, 'Australia', 'emily.davis@example.com', 'Active'),
+    (5, 'Mr.', 'Michael', 'Wilson', 12, 9, 1988, 'USA', 'michael.wilson@example.com', 'Inactive'),
+    (6, 'Ms.', 'Olivia', 'Brown', 18, 12, 1995, 'New Zealand', 'olivia.brown@example.com', 'Active'),
+    (7, 'Dr.', 'James', 'Taylor', 3, 1, 1980, 'Ireland', 'james.taylor@example.com', 'Active'),
+    (8, 'Mrs.', 'Sophia', 'Moore', 25, 4, 1989, 'South Africa', 'sophia.moore@example.com', 'Inactive'),
+    (9, 'Mr.', 'David', 'Anderson', 30, 10, 1978, 'USA', 'david.anderson@example.com', 'Active'),
+    (10, 'Ms.', 'Isabella', 'Martinez', 7, 8, 1993, 'Mexico', 'isabella.martinez@example.com', 'Active');
+
+
+SELECT * FROM customer; 
+
+
+
+/* Stored Procedure Construct
+
+CREATE OR REPLACE PROCEDURE procedure_name(table_name STRING)
+RETURNS STRING
+LANGUAGE SQL 
+COMMENT = 'This is sample porcedure'
+EXECUTE AS OWNER 
+AS
+ $$
+    -- body
+    RETURN 'SP operated successfully';
+  $$; 
+
+
+CREATE OR REPLACE PROCEDURE procedure_name()
+RETURNS data_type
+LANGUAGE SQL
+AS
+$$
+BEGIN
+    -- Your SQL code goes here
+    RETURN 'your_return_value';
+END;
+$$;
+*/
+
+-- Create a procedure to return date in a specific Format:
+
+CREATE OR REPLACE PROCEDURE get_current_date()
+RETURNS STRING
+LANGUAGE SQL AS
+$$
+  BEGIN 
+    RETURN TO_CHAR(CURRENT_DATE(), 'DD-MM-YYYY');
+  END; 
+$$; 
+
+CALL get_current_date();
+
+
+-- Let's say you have a salary Table and you want to check the Type of Salary: 
+
+CREATE OR REPLACE PROCEDURE salary_check(salary FLOAT)
+RETURNS STRING
+LANGUAGE SQL AS
+$$
+DECLARE result STRING;
+ BEGIN 
+    IF salary > 50000 THEN  result := 'High';
+    ELSIF salary < 0 THEN result := 'Defaulter';
+    ELSE result := 'Low'
+    END IF; 
+  RETURN result; 
+ END; 
+$$; 
+
+
+CREATE OR REPLACE PROCEDURE salary_check(FLOAT)
+RETURNS STRING
+LANGUAGE SQL AS 
+$$
+   DECLARE result STRING; 
+    BEGIN 
+        IF salary > 0 TEHN result := 'High';
+        IF salary <0 THEN result := 'defaulter';
+        IF salary = 0 THEN result := 'low';
+        END IF;
+      RETURN result; 
+    END; 
+$$
+
+
+
+CREATE OR REPLACE PROCEDURE salary_check(salary FLOAT)
+RETURNS STRING
+LANGUAGE SQL AS
+$$
+  DECLARE result STRING; 
+  BEGIN 
+    IF salary > 50000 THEN result := 'High';
+    ELSIF salary >= 30000 AND salary <=50000 THEN result := 'Mid';
+    ELSIF salary >0 AND salary < 30000 THEN result := 'Low';
+    ELSE result := 'Negative';
+    END IF; 
+     RETURN result; 
+  END; 
+$$;
+
+
+
+
+-- Anonymous Block Ta Claculation
+
+DECLARE 
+    tax_amt NUMBER(10,2) DEFAULT 0.00;
+    base_salary_slab NUMBER(10,2) DEFAULT 30000.00;
+
+BEGIN
+
+    LET gross_salary NUMBER(10,2) := 1000000.00;
+    LET tax_slab NUMBER(3,2) := 0.20; 
+
+    LET taxable_salary NUMBER(10,2) := 0.00; 
+
+    IF (gross_salary > base_salary_slab) THEN
+        taxable_salary := (gross_salary- base_salary_slab); 
+        tax_amt := taxable_salary * tax_slab;
+    END IF;
+    RETURN tax_amt; 
+END; 
+    
+
+    
+
+
+
+
+
+
+
+    
+
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    
+
+
+
