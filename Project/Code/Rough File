@@ -1,0 +1,317 @@
+Create Database Spring_financial_May2024_analysis;
+
+CREATE SCHEMA Analysis;
+
+create or replace table Event
+(
+    EventID VARCHAR(80),
+    Timestamp TIMESTAMP_NTZ,
+    USERID VARCHAR(40),
+    EVENT STRING,
+    SOURCE STRING
+);
+
+select * from Event;
+
+
+Create or replace table User
+(
+  UserID VARCHAR(80),
+  Leadstatus VARCHAR(80),
+  Opportunity_status VARCHAR(40),
+  Province VARCHAR(4),
+  Lead_Created_date TIMESTAMP_LTZ,
+  Opprtunity_created_date TIMESTAMP_LTZ,
+  Portfolio string,
+  funding_date date,
+  requested_loan_amount varchar(100),
+  approved_loan_amount int
+);
+
+
+SELECT TIMESTAMP, TO_TIMESTAMP_TZ(TIMESTAMP, 'YYYY-MM-DD"T"HH24:MI:SS.FF3Z') from Event
+
+
+
+--------------
+
+create or replace table Event2
+(
+    EventID VARCHAR(80),
+    Timestamp TIMESTAMP_NTZ,
+    timestamp_on date,
+    USERID VARCHAR(40),
+    EVENT STRING,
+    SOURCE STRING
+);
+
+
+insert into Event2(EventID,Timestamp,timestamp_on,USERID,EVENT,SOURCE)
+select EventID,Timestamp,Timestamp::Date,USERID,EVENT,SOURCE from Event;
+
+
+
+
+-- USER TABLE
+
+create or replace table user_2
+(
+  UserID VARCHAR(80),
+  Leadstatus VARCHAR(80),
+  Opportunity_status VARCHAR(40),
+  Province VARCHAR(4),
+  Lead_Created_date TIMESTAMP_LTZ,
+  lead_created_on DATE,
+
+  Opprtunity_created_date TIMESTAMP_LTZ,
+  Opprtunity_created_on DATE,
+  Portfolio string,
+  funding_date date,
+
+  requested_loan_amount varchar(100),
+  approved_loan_amount int
+);
+
+insert into user_2(UserID,Leadstatus,Opportunity_status,Province,Lead_Created_date,lead_created_on,Opprtunity_created_date,Opprtunity_created_on,
+Portfolio,funding_date,requested_loan_amount,approved_loan_amount)
+select UserID,Leadstatus,Opportunity_status,Province,Lead_Created_date,Lead_Created_date::date,Opprtunity_created_date,Opprtunity_created_date::date,
+Portfolio,funding_date,requested_loan_amount,approved_loan_amount from user;
+
+
+select * from user_2;
+
+alter table user_2 drop column LEAD_CREATED_DATE;
+alter table user_2 drop column Opprtunity_created_date;
+
+
+select * from user_2; 
+
+
+
+
+
+
+
+
+
+-- Count the number of NULL values in the LEAD_CREATED_DATE column
+SELECT COUNT(*) AS null_count
+FROM user_2
+WHERE lead_created_on IS NULL; -- 0 
+
+Select * from event2;
+select * from user_2;
+
+select u.user_id,e.eventid,e.event,e.source,e.timestamp_on as system_entry_date,u.lead_created_on as lead_creation_date,
+u.oppetunity_created_on as opprtunity_created_date,u.portfolio,u.funding_date,u.requested_loan_amount,u.approved_loan_amount
+from user_2 u left join event2 e on u.userid = e.userid;
+
+
+select e.eventid,e.timestamp_on,e.userid,e.event,e.source,u.lead_created_on as lead_creation_date,u.OPPRTUNITY_CREATED_ON as 
+opprtunity_created_date,u.portfolio,u.funding_date,u.requested_loan_amount,u.approved_loan_amount from event2 e left join 
+user_2 u on e.USERID = u.USERID;
+
+
+select *  from event;
+
+Select * from user;
+
+Create or replace view vw_event_user_master as
+select e.eventid, e.timestamp, e.userid,e.event, e.source,u.LEAD_CREATED_DATE,u.OPPRTUNITY_CREATED_DATE,u.funding_date,
+       u.LEADSTATUS,u.OPPORTUNITY_STATUS,U.PROVINCE,
+       u.portfolio,u.requested_loan_amount,u.approved_loan_amount ,
+case 
+    when u.OPPORTUNITY_STATUS = 'Funded' and u.APPROVED_LOAN_AMOUNT > 0 then 'Credited Loan Amount'
+    when u.OPPORTUNITY_STATUS = 'Approved' and  u.APPROVED_LOAN_AMOUNT > 0 then 'Funded Loan Amount' 
+    else 'NA'
+    end as loan_status
+    
+from event e left join user u on e.userid = u.userid
+order by e.userid, e.timestamp asc;
+
+
+
+
+
+select count(*) from vw_event_user_master;-- 1,267,054
+select count(*) from user; -- 87,426
+select count(*) from event; -- 1,075,826
+
+select count(distinct userid) from user; -- 74,755
+select count(distinct userid) from event; -- 82,665
+
+select count(distinct event) from event --39
+select count(distinct eventid) from event --1,075,826
+
+-- count check 
+select count(distinct userid) from vw_event_user_master; -- 82,665
+select count(distinct userid) from user; -- 74,755
+select count(distinct userid) from event; -- 82,665
+
+-- Blank check(
+
+select count(*) from SPRING_FINANCIAL_MAY2024_ANALYSIS.ANALYSIS.VW_EVENT_USER_MASTER where eventid is null; -- 0 
+select count (*) from SPRING_FINANCIAL_MAY2024_ANALYSIS.ANALYSIS.VW_EVENT_USER_MASTER  where timestamp is null; -- 0\
+select count (*) from SPRING_FINANCIAL_MAY2024_ANALYSIS.ANALYSIS.VW_EVENT_USER_MASTER  where USERID is null; -- 0
+select count (*) from SPRING_FINANCIAL_MAY2024_ANALYSIS.ANALYSIS.VW_EVENT_USER_MASTER  where EVENT is null; -- 0
+select count (*) from SPRING_FINANCIAL_MAY2024_ANALYSIS.ANALYSIS.VW_EVENT_USER_MASTER  where SOURCE is null; -- 243,557
+select count (*) from SPRING_FINANCIAL_MAY2024_ANALYSIS.ANALYSIS.VW_EVENT_USER_MASTER  where LEAD_CREATED_DATE is null;
+select count (*) from SPRING_FINANCIAL_MAY2024_ANALYSIS.ANALYSIS.VW_EVENT_USER_MASTER  where OPPRTUNITY_CREATED_DATE is null; -- 64,154
+select count(*) from SPRING_FINANCIAL_MAY2024_ANALYSIS.ANALYSIS.VW_EVENT_USER_MASTER where FUNDING_DATE is null; -- 0 -- 1,060,690
+select count (*) from SPRING_FINANCIAL_MAY2024_ANALYSIS.ANALYSIS.VW_EVENT_USER_MASTER  where LEADSTATUS is null; -- 64,154
+select count (*) from SPRING_FINANCIAL_MAY2024_ANALYSIS.ANALYSIS.VW_EVENT_USER_MASTER  where OPPORTUNITY_STATUS is null;-- 776,061
+select count (*) from SPRING_FINANCIAL_MAY2024_ANALYSIS.ANALYSIS.VW_EVENT_USER_MASTER  where PROVINCE is null;-- 94,556
+select count (*) from SPRING_FINANCIAL_MAY2024_ANALYSIS.ANALYSIS.VW_EVENT_USER_MASTER  where PORTFOLIO is null; -- 776,296
+select count (*) from SPRING_FINANCIAL_MAY2024_ANALYSIS.ANALYSIS.VW_EVENT_USER_MASTER  where REQUESTED_LOAN_AMOUNT is null; -- 84,311
+select count (*) from SPRING_FINANCIAL_MAY2024_ANALYSIS.ANALYSIS.VW_EVENT_USER_MASTER  where APPROVED_LOAN_AMOUNT is null; -- 776,061
+
+
+select TIMESTAMP::date  as timestamp_date from SPRING_FINANCIAL_MAY2024_ANALYSIS.ANALYSIS.VW_EVENT_USER_MASTER;
+
+
+
+select  month(TIMESTAMP::date) as timestamp_month, count(*) 
+from VW_EVENT_USER_MASTER group by 1 order by 2 desc; -- 1,267,054
+
+select  Year(TIMESTAMP::date) as timestamp_year, count(*) 
+from VW_EVENT_USER_MASTER group by 1 order by 2 desc;-- 1,267,054
+
+select  DAY(TIMESTAMP::date) as timestamp_day, count(*) 
+from VW_EVENT_USER_MASTER group by 1 order by 2 desc;  
+
+select userid, count(*) from VW_EVENT_USER_MASTER
+group by 1 order by 2 desc;
+
+select * from VW_EVENT_USER_MASTER where userid = 'LVM50SK4QEH0XPX011UU' order by timestamp asc;
+
+
+
+
+
+
+select distinct(source),count(distinct userid) , count(*) 
+from SPRING_FINANCIAL_MAY2024_ANALYSIS.ANALYSIS.VW_EVENT_USER_MASTER
+group by 1
+order by 2 desc
+
+select * from SPRING_FINANCIAL_MAY2024_ANALYSIS.ANALYSIS.VW_EVENT_USER_MASTER  where SOURCE is null;
+
+
+
+select distinct(OPPRTUNITY_CREATED_DATE), count(*) 
+from SPRING_FINANCIAL_MAY2024_ANALYSIS.ANALYSIS.VW_EVENT_USER_MASTER
+group by 1
+order by 2 desc
+
+select * from SPRING_FINANCIAL_MAY2024_ANALYSIS.ANALYSIS.VW_EVENT_USER_MASTER  where SOURCE is null;
+
+
+select distinct(source), count(distinct userid), count(distinct APPROVED_LOAN_AMOUNT), sum(APPROVED_LOAN_AMOUNT),
+from SPRING_FINANCIAL_MAY2024_ANALYSIS.ANALYSIS.VW_EVENT_USER_MASTER
+group by 1 having sum(APPROVED_LOAN_AMOUNT)> 0
+order by 2 desc ;-- INSIGHTS: 2nde highest contributor, not known??  /* TAKE TOP 10 SOURCES*/ remaining sources dont contribute that much 
+
+
+select distinct source,loan_status, count(distinct userid), sum(APPROVED_LOAN_AMOUNT)
+from SPRING_FINANCIAL_MAY2024_ANALYSIS.ANALYSIS.VW_EVENT_USER_MASTER 
+where loan_status <> 'NA'
+group by 1,2
+order by 3 desc ;
+
+
+select opportunity_status,sum(APPROVED_LOAN_AMOUNT),count(*) from  VW_EVENT_USER_MASTER
+group by 1
+order by 2 desc;
+
+
+-- Funded, approved, New Applicant, Declined, Not Interested, Pending,
+-- Not Qualified.
+
+
+
+select * from VW_EVENT_USER_MASTER;
+
+select * from SPRING_FINANCIAL_MAY2024_ANALYSIS.ANALYSIS.VW_EVENT_USER_MASTER  where SOURCE is null;
+
+
+select distinct(source), count(*) 
+from SPRING_FINANCIAL_MAY2024_ANALYSIS.ANALYSIS.VW_EVENT_USER_MASTER
+group by 1
+order by 2 desc
+
+select * from SPRING_FINANCIAL_MAY2024_ANALYSIS.ANALYSIS.VW_EVENT_USER_MASTER  where SOURCE is null;
+
+
+select distinct(source), count(*) 
+from SPRING_FINANCIAL_MAY2024_ANALYSIS.ANALYSIS.VW_EVENT_USER_MASTER
+group by 1
+order by 2 desc
+
+select * from SPRING_FINANCIAL_MAY2024_ANALYSIS.ANALYSIS.VW_EVENT_USER_MASTER  where SOURCE is null;
+
+
+select distinct event , count(distinct userid), count(*) from VW_EVENT_USER_MASTER
+group by 1
+order by 2 desc;
+
+select distinct * from VW_EVENT_USER_MASTER where userid = 'JJQS0YUZVRTRO53J1F-D' order by timestamp, portfolio;
+
+select distinct(OPPORTUNITY_STATUS) from VW_EVENT_USER_MASTER where portfolio = 'The Foundation 03/21'; -- 11
+
+select distinct(portfolio) from VW_EVENT_USER_MASTER ;
+
+select distinct LEADSTATUS,  OPPORTUNITY_STATUS, portfolio , count(distinct userid),sum(APPROVED_LOAN_AMOUNT) ,count(*)
+from VW_EVENT_USER_MASTER 
+group by 1,2,3 order by 1,2,3;
+
+
+-- A
+
+select distinct userid from
+
+(select distinct userid from VW_EVENT_USER_MASTER where opprtunity_status = 'Approved') as alias_name
+where;
+
+
+select event,OPPORTUNITY_STATUS, count(distinct userid) as count_users, sum(APPROVED_LOAN_AMOUNT) as total_approved_loan_amt 
+from VW_EVENT_USER_MASTER  where opportunity_status = 'Funded'
+group by 1,2 
+order by 3 desc;
+
+
+
+select *, row_number() over (partition by userid order by timestamp) as row_count  
+from VW_EVENT_USER_MASTER
+where opportunity_status IN ('Funded', 'Approved');
+
+
+
+select *, 
+case 
+    when OPPORTUNITY_STATUS = 'Funded' and  APPROVED_LOAN_AMOUNT >0 then 'Credited Loan Amount'
+    when OPPORTUNITY_STATUS = 'Approved' and  APPROVED_LOAN_AMOUNT >0 then 'Funded Loan Amount' 
+    else 'NA' 
+end as loan_status
+from VW_EVENT_USER_MASTER;
+
+
+select * from user order by userid;
+
+select * from user;
+
+
+with cte2 as
+(
+
+with cte as
+(
+
+select * from user where funding_date IS NOT NULL
+) select row_number() over (partition by userid order by userid) as count_x, *, from cte
+) select * from cte2 where count_x >1;
+
+Select  count(*) from (select * from user where funding_date IS NOT NULL); -- 11,457
+
+select count(distinct userid) from (select * from user where funding_date IS NOT NULL); -- 11,285
+
+
