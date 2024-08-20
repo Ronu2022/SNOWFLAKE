@@ -1,0 +1,202 @@
+----------------------------
+/*How to Declare Variables*/
+----------------------------
+
+-- DECLARE section allows us to declare variables; 
+-- let's Declare variable with  name but without dtyoe 
+
+
+DECLARE 
+    tet_variable; 
+BEGIN 
+    RETURN tet_variable; 
+END;  -- Check: Error:  variable 'TET_VARIABLE' must have either a type or an initializer to infer a type from
+
+
+-- Let's check it with procedure: 
+
+CREATE OR REPLACE PROCEDURE my_variable_sp()
+RETURNS FLOAT
+LANGUAGE SQL AS
+$$
+    DECLARE 
+        tet_variable; 
+    BEGIN 
+        RETURN tet_variable; 
+    END; 
+$$; 
+
+
+-- 092229 (P0000): SQL compilation error: error line 3 at position 8
+--  variable 'TET_VARIABLE' must have either a type or an initializer to infer a type from
+
+-- Line 3 isnt Language SQL because for Stored Procedure line would starts after AS.
+ -- so line 3 is actually tet_variable; 
+-- Thus, it is evident that things are not working without stored procedure. 
+
+
+-- Let's Try again with dtype
+
+DECLARE 
+    tet_variable TEXT;
+BEGIN 
+    RETURN tet_variable; 
+END;  -- o/p is an anonymous block with NULL because there is no value in it. 
+
+
+-- let's try with stored procedure
+CREATE OR REPLACE PROCEDURE my_dtype_proc()
+RETURNS FLOAT
+LANGUAGE SQL AS -- Note: it wirks without $$ sign too
+DECLARE
+    tet_variable FLOAT DEFAULT 10.22; 
+BEGIN 
+    RETURN tet_variable; 
+END; 
+
+CALL my_dtype_proc();
+
+
+CREATE OR REPLACE PROCEDURE my_dtype_proc2()
+RETURNS FLOAT
+LANGUAGE SQL AS
+-- Note: it wirks without $$ sign too
+$$
+DECLARE
+    tet_variable FLOAT DEFAULT 10.22; 
+BEGIN 
+    RETURN tet_variable; 
+END; 
+
+$$;
+
+CALL my_dtype_proc2();
+
+
+
+--- With default 
+
+DECLARE 
+    tet_variable DEFAULT '<not-known';
+BEGIN 
+    RETURN tet_variable; 
+END;  -- operational 
+
+-- With Procedure 
+
+CREATE OR REPLACE procedure my_variable_default_sp()
+RETURNS TEXT
+LANGUAGE SQL AS
+$$
+DECLARE 
+    tet_variable DEFAULT '<not-known';
+BEGIN 
+    RETURN tet_variable; 
+END; 
+$$; 
+
+CALL my_variable_default_sp();  --  displayed, note here there is no dtype but still worked because of DEFAULT keyword. 
+
+-- Checking if a Function can bve associated with QUery activity. 
+
+ALTER SESSION SET query_tag = 'Single-Function-As- EXPRESSION'; -- hence fourth all teh query rin will be under this tag.
+
+
+SELECT * FROM TABLE(information_schema.query_history()); -- check for query_tag
+
+
+
+-- Without Procedure
+
+DECLARE 
+    ts_variable TIMESTAMP DEFAULT CURRENT_TIMESTAMP(); 
+    dt_variable DATE DEFAULT CURRENT_DATE(); 
+BEGIN 
+    RETURN ts_variable || dt_variable;
+END;  -- worked well 
+
+-- with Procedure 
+
+CREATE OR REPLACE PROCEDURE my_procedure_default_func4()
+RETURNS TEXT
+LANGUAGE SQL AS
+$$
+DECLARE 
+    ts_variable TIMESTAMP DEFAULT CURRENT_TIMESTAMP(); 
+    dt_variable DATE DEFAULT CURRENT_DATE(); 
+BEGIN
+    RETURN ts_variable || dt_variable; 
+END; 
+$$;
+
+CALL my_procedure_default_func4();
+
+SELECT * FROM TABLE(INFORMATION_SCHEMA.QUERY_HISTORY()); -- Check all are under the same query_tag
+
+-- Multiple  Functions WITH AS Default EPRESSION. 
+
+ALTER SESSION SET QUERY_TAG = 'Function-AS-EXPRESSION';
+
+-- Without Procedure 
+
+DECLARE 
+    tet_variable TEXT DEFAULT CURRENT_ROLE() || CURRENT_DATABASE() || CURRENT_SCHEMA(); 
+BEGIN 
+    RETURN tet_variable;
+END; 
+
+
+-- with Procedure 
+
+CREATE OR REPLACE PROCEDURE proc_default_func_multiple_4()
+RETURNS TEXT
+LANGUAGE SQL AS
+$$
+DECLARE 
+    tet_variable TEXT DEFAULT CURRENT_ROLE() || CURRENT_DATABASE() || CURRENT_SCHEMA(); 
+BEGIN 
+    RETURN tet_variable;
+END; 
+$$; 
+
+CALL proc_default_func_multiple_4(); 
+
+
+
+
+-- Using Select Statemnt: 
+
+/* 
+When Enabled (TRUE): Snowflake will use cached results if the same query has been run before and the underlying data hasn't changed.
+This can improve performance and reduce compute costs by avoiding redundant query execution.
+
+When Disabled (FALSE): Snowflake will always execute the query afresh, even if identical queries have been executed recently and their results are available in the cache.
+*/ 
+
+
+ALTER SESSION SET USE_CACHED_RESULT = FALSE; 
+
+SELECT * FROM customer; 
+
+-- withoiut using Procedure 
+
+DECLARE 
+    tbl_count NUMBER(10,2) DEFAULT (SELECT COUNT(*) FROM customer); 
+BEGIN
+    RETURN tbl_count; 
+END;  -- working 
+
+
+-- with Procedure
+
+CREATE OR REPLACE  PROCEDURE my_proc_using_select_statement()
+RETURNS TEXT
+LANGUAGE SQL AS
+$$
+DECLARE
+    tbl_count NUMBER(10,2) DEFAULT (SELECT COUNT(*) FROM customer);
+BEGIN 
+    RETURN TO_VARCHAR(tbl_count);
+END; 
+ $$;
+CALL my_proc_using_select_statement();  -- worked
