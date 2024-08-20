@@ -150,12 +150,12 @@ DECLARE
     base_salary_slab NUMBER(10,2) DEFAULT 30000.00;
 
 BEGIN
-
+    -- gross salary and tax percentage value
     LET gross_salary NUMBER(10,2) := 1000000.00;
     LET tax_slab NUMBER(3,2) := 0.20; 
-
+    -- taxable_slary calculation
     LET taxable_salary NUMBER(10,2) := 0.00; 
-
+    -- taxable salary calculation.
     IF (gross_salary > base_salary_slab) THEN
         taxable_salary := (gross_salary- base_salary_slab); 
         tax_amt := taxable_salary * tax_slab;
@@ -165,8 +165,24 @@ END;
     
 
     
+-- This also works
+DECLARE 
+    tax_amt NUMBER(10,2) DEFAULT 0.00;
+    base_salary_slab NUMBER(10,2) DEFAULT 30000.00;
+    gross_salary NUMBER(10,2) DEFAULT 1000000.00; -- Moved from LET to DECLARE
+    tax_slab NUMBER(3,2) DEFAULT 0.20;            -- Moved from LET to DECLARE
+    taxable_salary NUMBER(10,2) DEFAULT 0.00;     -- Moved from LET to DECLARE
+
+BEGIN
+    IF (gross_salary > base_salary_slab) THEN
+        taxable_salary := (gross_salary - base_salary_slab); 
+        tax_amt := taxable_salary * tax_slab;
+    END IF;
+    RETURN tax_amt; 
+END;
 
 
+-- Let's Create the same within stored Procedure: 
 
 
 
@@ -178,22 +194,54 @@ END;
     
 
 
+CREATE OR REPLACE PROCEDURE calculate_tax()
+RETURNS FLOAT
+LANGUAGE SQL AS
+$$
+DECLARE 
+    tax_amt NUMBER(10,2) DEFAULT 0.00;
+    base_salary_slab NUMBER(10,2) DEFAULT 30000.00;
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+BEGIN
     
+    LET gross_salary NUMBER(10,2) := 1000000.00;
+    LET tax_slab NUMBER(3,2) := 0.20; 
+    LET taxable_salary NUMBER(10,2) := 0.00; 
+    
+    IF (gross_salary > base_salary_slab) THEN
+        taxable_salary := (gross_salary- base_salary_slab); 
+        tax_amt := taxable_salary * tax_slab;
+    END IF;
+    RETURN tax_amt; 
+END; 
+    
+$$;    
+-- Calling the Procedure
+CALL calculate_tax();
 
 
+-- the second procedure:
 
+
+CREATE OR REPLACE PROCEDURE calculate_tax2 (g NUMBER(10,2),b NUMBER(10,2), t NUMBER(4,2))
+RETURNS FLOAT
+LANGUAGE SQL AS
+$$
+DECLARE  ts NUMBER (10,2);
+         ta NUMBER (10,2);
+BEGIN 
+
+    IF (g > b) THEN 
+        ts := (g-b); 
+        ta := t * ts; 
+    RETURN TO_VARCHAR(ta);
+    
+    ELSE 
+        RETURN 'No tax deductions,gross salary is < base Salary';
+    END IF; 
+END;
+$$;
+
+CALL calculate_tax2 (100000,30000,0.20);
+
+CALL calculate_tax2 (20000,42000,0.33);
