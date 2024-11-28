@@ -1,0 +1,112 @@
+CREATE OR REPLACE TABLE assignment_product 
+(
+    Product_Description VARCHAR,
+    Material VARCHAR,
+    Grade VARCHAR
+) COMMENT = 'This is the given Table';
+
+
+-- Load the data from the file. 
+
+
+-- Checking for Fatty Alcohol:
+
+
+SELECT Product_Description, Material,
+       INITCAP(
+           CASE 
+               -- Step 1: Extract known grades anywhere in the text (including nested or multiple parentheses)
+               WHEN REGEXP_SUBSTR(Product_Description, '\\b(lauryl myristyl alcohol|cetyl stearyl alcohol|stearyl alcohol|lauryl alcohol|myristyl alcohol|lauric and myristic alcohol)\\b', 1, 1, 'i') IS NOT NULL THEN
+                    REGEXP_REPLACE(
+                        REGEXP_SUBSTR(Product_Description, '\\b(lauryl myristyl alcohol|cetyl stearyl alcohol|stearyl alcohol|lauryl alcohol|myristyl alcohol|lauric and myristic alcohol)\\b', 1, 1, 'i'),
+                        '-', ' '
+                    )
+
+               -- Step 2: Extract from any parentheses that contain relevant grade keywords
+               WHEN REGEXP_SUBSTR(Product_Description, '\\(([^()]*(lauryl|myristic|cetyl|stearyl|lauric)[^()]*)\\)', 1, 1, 'i') IS NOT NULL THEN
+                    REGEXP_REPLACE(
+                        REGEXP_SUBSTR(Product_Description, '\\(([^()]*(lauryl|myristic|cetyl|stearyl|lauric)[^()]*)\\)', 1, 1, 'i'),
+                        '-|\\(|\\)', ' '
+                    )
+                    
+               -- Step 3: If no valid grade is found, return "Others"
+               ELSE 'Others'
+           END
+       ) AS Extracted_Grade
+FROM assignment_product
+WHERE Material = 'Fatty Alcohol';
+
+
+
+-- Checking for Citric Acid: 
+
+
+
+SELECT Product_Description, Material,
+       INITCAP(
+           CASE 
+               -- Step 1: Extract known grades with flexible variations, including handling hyphens, typos, and embedded variations
+               WHEN REGEXP_SUBSTR(Product_Description, '(monohydrat(e)?|mono[-\s]?hydrat(e)?|anhydrous|anh?ydr[oou]*s?|anhdrous)', 1, 1, 'i') IS NOT NULL THEN
+                    REGEXP_REPLACE(
+                        REGEXP_SUBSTR(Product_Description, '(monohydrat(e)?|mono[-\s]?hydrat(e)?|anhydrous|anh?ydr[oou]*s?|anhdrous)', 1, 1, 'i'),
+                        '-', ''
+                    )
+               
+               -- Step 2: Default to "Others" if no valid grade is found
+               ELSE 'Others'
+           END
+       ) AS Extracted_Grade
+FROM assignment_product
+WHERE Material = 'Citric Acid';
+
+
+
+-- Combining both:
+
+SELECT
+    Product_Description,
+    Material,
+    INITCAP(
+        CASE
+            WHEN Material = 'Fatty Alcohol' THEN
+                CASE
+                    -- # Extracted known grades anywhere in the text
+                WHEN REGEXP_SUBSTR(Product_Description, '\\b(lauryl myristyl alcohol|cetyl stearyl alcohol|stearyl alcohol|lauryl alcohol|myristyl alcohol|lauric and myristic alcohol)\\b', 1, 1, 'i') IS NOT NULL THEN
+                        REGEXP_REPLACE
+                        (
+                            REGEXP_SUBSTR(Product_Description, '\\b(lauryl myristyl alcohol|cetyl stearyl alcohol|stearyl alcohol|lauryl alcohol|myristyl alcohol|lauric and myristic alcohol)\\b', 1, 1, 'i'),
+                            '-', ' '
+                        )
+                    -- # Extracted from parentheses containing relevant keywords
+                    WHEN REGEXP_SUBSTR
+                    (
+                        Product_Description, '\\(([^()]*(lauryl|myristic|cetyl|stearyl|lauric)[^()]*)\\)', 1, 1, 'i') IS NOT NULL THEN
+                        REGEXP_REPLACE(
+                            REGEXP_SUBSTR(Product_Description, '\\(([^()]*(lauryl|myristic|cetyl|stearyl|lauric)[^()]*)\\)', 1, 1, 'i'),
+                            '-|\\(|\\)', ' '
+                        )
+                    -- ## Step 3: Default to "Others" if no valid grade is found
+                    ELSE 'Others'
+                END
+            WHEN Material = 'Citric Acid' THEN
+                CASE
+                    -- ## 1.a: Extracted known grades with flexible variations
+                    WHEN REGEXP_SUBSTR(Product_Description, '(monohydrat(e)?|mono[-\\s]?hydrat(e)?|anhydrous|anh?ydr[oou]*s?|anhdrous)', 1, 1, 'i') IS NOT NULL THEN
+                        REGEXP_REPLACE(
+                            REGEXP_SUBSTR(Product_Description, '(monohydrat(e)?|mono[-\\s]?hydrat(e)?|anhydrous|anh?ydr[oou]*s?|anhdrous)', 1, 1, 'i'),
+                            '-', ''
+                        )
+                    -- ## 2.a Default to "Others" if no valid grade is found
+                    ELSE 'Others'
+                END
+            ELSE
+                -- For "Others" material, set Grade to 'NA'
+                'NA'
+        END
+    ) AS Grade
+FROM
+    assignment_product;
+
+
+
+
