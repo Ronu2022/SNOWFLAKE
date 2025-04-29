@@ -4,6 +4,7 @@ CREATE OR REPLACE TABLE employees
     name STRING
 );
 
+
 -- Source table
 CREATE OR REPLACE TABLE new_employees
 (
