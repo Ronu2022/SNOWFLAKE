@@ -1,10 +1,6 @@
 
-
-
-
 -- Unless the structure of the Json is valid, querrying wont work 
 -- query json : using the langubgae that uyou use - here sql  also called as processing json or qorking with json 
-
 
 -- creating an employee table
 
