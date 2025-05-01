@@ -1,9 +1,6 @@
 use IOT_V2;
 CREATE SCHEMA s3_load_Lecture_series;
 
-
-
-
 -- creating an external stage
 
 CREATE OR REPLACE STAGE stage_Lectures
