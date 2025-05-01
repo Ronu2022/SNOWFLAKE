@@ -6,7 +6,6 @@ CREATE DATABASE external_stage_json;
   -- table stage regeered as @%table-name
   -- named internal stage @stage-name
 
-
   create or replace file format json_format
   type = 'json'
   compression = 'auto';
