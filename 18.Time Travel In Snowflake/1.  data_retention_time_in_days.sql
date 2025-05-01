@@ -1,6 +1,7 @@
 
 // TIME TRAVEL IN SNOWFLAKE
 
+    
 /*
 What is TIME TRAVEL and how it is used in SNOWFLAKE?
 -- Snowflake Time Travel enables accessing historical data (i.e. data that has been changed or deleted) at any point within a defined period. 
