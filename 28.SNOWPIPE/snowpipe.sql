@@ -121,3 +121,136 @@ SELECT * FROM AWS_INTEGRATION.AWSINTEGRATIONJANA.snow_pipe_emp_data; -- 0 record
 // Let's Upload a file with 100 Records:
 
 SELECT * FROM AWS_INTEGRATION.AWSINTEGRATIONJANA.snow_pipe_emp_data; -- 100 Rows ingested
+
+
+  ----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+  -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+/* TROUBLE SHOOTING SNOWPIPES */
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+// Step 1: CHECKING THE SNOWPIPE STATUS
+
+select SYSTEM$PIPE_STATUS('AWS_INTEGRATION.PIPES.EMPLOYEE_PIPE');
+
+-- Check for:
+-- "lastReceivedMessageTimestamp" : This gives you when was the event notification recieved by the Snowpipe
+-- "lastForwardedMessageTimestamp"  This gives you when  did the snowpipe start working that is copying the entries into the Table.
+-- If both show near about same time => smooth.
+-- Let's assume file was uploaded at 10 AM, but here the last recieved message was of 8 AM => there could be possibility of mismatch wrt the 
+    -- notification set up -> Check for the nOtification ARN
+    -- Recall: Creation of Snowpipe -> Desc Snowpipe_name -> Notification_Channel -> Copy and check it with the event creation Notification 
+      -- channel ARN that was set up in AWS if they are matching or not.
+--  for Lastforwarded Message : If there is a considerable Lag then the issue is with the File Path
+    -- Recall: Storage Integration Creation -> storage_aws_role_arn -> check if it matches to that of the role and Policies Trust relationship 
+    -- if not change it. 
+
+
+// STEP 2: CHECKING FOR COPY HISTORY
+
+-- let's say Step 1 is okay
+-- Then Check for Copy History : to see of there are any errors in the Files.
+
+
+SELECT * FROM TABLE
+(INFORMATION_SCHEMA.COPY_HISTORY
+    (
+        TABLE_NAME => 'AWS_INTEGRATION.AWSINTEGRATIONJANA.snow_pipe_emp_data',
+        START_TIME => DATEADD(DAY,-1, CURRENT_TIMESTAMP)
+    )
+) -- Here you can check for the Error Specific to any Specific File if any
+
+-- Let's say here you got to know there is an error in file employee_2.csv
+-- you might go to step 3 to check what all are the error logs.
+-- go to the source team to get the correct file.
+-- once done, you will have to copy them Manually once, from next time onwards if the pattern remains same, it will work automatically.
+-- Don't RUN!!
+
+LOAD INTO table_name 
+FROM @stage_name
+FILE = ('employee_2.csv');
+
+
+
+// STEP 3:  CHECKING FOR VALIDATE DATA FILES
+
+
+SELECT * FROM TABLE
+(INFORMATION_SCHEMA.VALIDATE_PIPE_LOAD
+        (
+            PIPE_NAME => 'AWS_INTEGRATION.PIPES.EMPLOYEE_PIPE',
+            START_TIME => DATEADD(DAY,-1, CURRENT_TIMESTAMP)
+        )
+) --- NO rows because the loading was successfull, if it wasn't it would have been reflecting the rows that are error prone.
+
+
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+/* PIPES SPECIFIC COMMANDS*/
+
+
+DESC PIPE AWS_INTEGRATION.PIPES.EMPLOYEE_PIPE; -- Check for the Definition (Code)
+-- or for the notification_channel That was used to create notification.
+
+SHOW PIPES;
+
+SHOW PIPES LIKE '%employee%';
+
+SHOW PIPES IN DATABASE AWS_INTEGRATION;
+
+SHOW PIPES IN SCHEMA AWS_INTEGRATION.PIPES;
+
+SHOW PIPES LIKE '%employee%' IN DATABASE AWS_INTEGRATION;
+
+
+-- Let's say there was one snowpipe already created
+
+Create or replace pipe snowpipe_dummy
+auto_ingest = True
+As
+copy into table_a
+from @stage_name
+pattern = '*employee.*';
+
+-- now you wish to replace the table_a with table_b
+
+-- Step 1: Pause the Existing Snopipe
+
+ALTER PIPE AWS_INTEGRATION.PIPES.EMPLOYEE_PIPE SET PIPE_EXECUTION_PAUSED = true;
+
+-- Step 2: Confirm the Status
+
+SELECT SYSTEM$PIPE_STATUS ('AWS_INTEGRATION.PIPES.EMPLOYEE_PIPE') -- Check for Execution: Paused.
+
+
+-- Step 3: CREATE OR REPLACE the existing snowpipe and replace the old table_name with new if you wish to keep the same name
+
+Create or replace pipe snowpipe_dummy
+auto_ingest = True
+As
+copy into table_b
+from @stage_name
+pattern = '*employee.*';
+
+
+-- else create a new pipe
+
+-- Step 4: after the replacement all copy history the old ones get truncated.
+i.e
+
+SELECT * FROM TABLE(INFORMATION_SCHEMA.COPY_HISTORY
+    (
+        TABLE_NAME => 'AWS_INTEGRATION.AWSINTEGRATIONJANA.snow_pipe_emp_data',
+        START_TIME =>  DATEADD(DAY,-1, CURRENT_TIMESTAMP)
+    )
+) -- this would be null becuase existing ones gets replaced.
+
+-- STep 5; Resume the old pipe or keep suspended.
+
+ALTER PIPE AWS_INTEGRATION.PIPES.EMPLOYEE_PIPE SET PIPE_EXECUTION_PAUSED = FALSE; 
+
+SELECT SYSTEM$PIPE_STATUS ('AWS_INTEGRATION.PIPES.EMPLOYEE_PIPE');
+
+  
