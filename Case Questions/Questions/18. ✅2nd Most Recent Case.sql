@@ -24,6 +24,8 @@ insert into UserActivity values
 
 Select * from UserActivity;
 
+// CODE:
+    
 with cte as
 (
     Select 
@@ -32,20 +34,19 @@ with cte as
     from UserActivity
     GROUP BY username
 ),
-
-
 dense_rank_cte as
 (
 SELECT 
     ua.username,
     ua.activity,
-    ua.ENDDATE as second_last,
+    ua.startDate,
+    ua.ENDDATE,
     cte.total_records,
     dense_rank() OVER (PARTITION BY ua.USERNAME ORDER BY ua.ENDDATE DESC) as dr
     
 FROM UserActivity as ua
 LEFT JOIN cte ON ua.username = cte.username
-) SELECT USERNAME,second_last FROM dense_rank_cte
-
-WHERE ((total_records > 1) AND dr = 1)
+) SELECT username,activity,startDate,ENDDATE
+FROM dense_rank_cte
+WHERE ((total_records > 1) AND dr = 2)
 OR ((total_records = 1) AND  dr = 1 );
