@@ -50,3 +50,23 @@ LEFT JOIN cte ON ua.username = cte.username
 FROM dense_rank_cte
 WHERE ((total_records > 1) AND dr = 2)
 OR ((total_records = 1) AND  dr = 1 );
+
+
+
+-- So the Requirement of cte would have been eliminated if we used COUNT() as the window function :imP
+
+
+SELECT * FROM
+(
+SELECT 
+    USERNAME,
+    activity,
+    startDate,
+    ENDDATE,
+    COUNT(1) OVER(PARTITION BY USERNAME) AS records_count, -- Imp Case
+    DENSE_RANK() OVER(PARTITION BY USERNAME ORDER BY ENDDATE DESC ) AS dr
+FROM UserActivity
+)
+WHERE  ((RECORDS_COUNT > 1) AND dr = 2)
+OR ((RECORDS_COUNT = 1) AND  dr = 1 );
+
