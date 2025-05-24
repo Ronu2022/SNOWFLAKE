@@ -1,0 +1,40 @@
+[
+  {
+    "application_id": "APP001",
+    "product": "SPL",
+    "loan_details": {
+      "amount": 15000,
+      "term_months": 36,
+      "interest_rate": 7.5
+    },
+    "customer_info": {
+      "name": "John Doe",
+      "dob": "1990-06-15",
+      "credit_score": 720
+    },
+    "application_meta": {
+      "date": "2025-05-24T10:15:00Z",
+      "submitted_by": "Loans4All Canada",
+      "channel": "partner_portal"
+    }
+  },
+  {
+    "application_id": "APP002",
+    "product": "EVERGREEN",
+    "loan_details": {
+      "amount": 8000,
+      "term_months": 24,
+      "interest_rate": 6.0
+    },
+    "customer_info": {
+      "name": "Jane Smith",
+      "dob": "1985-11-23",
+      "credit_score": 680
+    },
+    "application_meta": {
+      "date": "2025-05-24T10:17:00Z",
+      "submitted_by": "EasyFinance Corp",
+      "channel": "api_ingestion"
+    }
+  }
+]

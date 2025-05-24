@@ -1,0 +1,20 @@
+[
+  {
+    "application_id": "APP003",
+    "product": "FOUNDATION",
+    "loan_details": {
+      "amount": "twelve thousand",
+      "term_months": 18,
+      "interest_rate": null
+    },
+    "customer_info": {
+      "name": "Mike Jones",
+      "dob": "1988-02-12"
+    },
+    "application_meta": {
+      "date": "2025-05-24T10:19:00Z",
+      "submitted_by": "BrokerFast",
+      "channel": "manual_upload"
+    }
+  }
+]

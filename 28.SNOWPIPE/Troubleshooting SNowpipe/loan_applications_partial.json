@@ -1,0 +1,39 @@
+[
+  {
+    "application_id": "APP004",
+    "product": "SPL",
+    "loan_details": {
+      "amount": 12000,
+      "term_months": 36,
+      "interest_rate": 7.0
+    },
+    "customer_info": {
+      "name": "Alice Brown",
+      "dob": "1992-08-21",
+      "credit_score": 710
+    },
+    "application_meta": {
+      "date": "2025-05-24T10:21:00Z",
+      "submitted_by": "SpringLoans",
+      "channel": "partner_portal"
+    }
+  },
+  {
+    "application_id": "APP005",
+    "product": "EVERGREEN",
+    "loan_details": {
+      "amount": "nine thousand",
+      "term_months": 24,
+      "interest_rate": 6.0
+    },
+    "customer_info": {
+      "name": "Bob White",
+      "dob": "1987-03-15"
+    },
+    "application_meta": {
+      "date": "2025-05-24T10:23:00Z",
+      "submitted_by": "EasyFinance Corp",
+      "channel": "api_ingestion"
+    }
+  }
+]
