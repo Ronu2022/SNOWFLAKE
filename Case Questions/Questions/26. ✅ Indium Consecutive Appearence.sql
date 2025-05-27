@@ -41,3 +41,18 @@ consecutive_counts_cte as
 )
 
 select num from consecutive_counts_cte where streak_length >= 3;
+
+
+// WAY 2: 
+
+# Write your MySQL query statement below
+select distinct num as ConsecutiveNums 
+from
+(
+    select id, num, 
+    lag(num) over (order by id asc) as prev_num,
+    lead(num) over(order by id) as next_num,
+    lead(num,2) over (order by id asc) as third_number
+    from logs
+) as alias_name where (NUM = Next_NUM) AND (NUM = THIRD_NUMBER) AND (NEXT_NUM = THIRD_NUMBER);
+
