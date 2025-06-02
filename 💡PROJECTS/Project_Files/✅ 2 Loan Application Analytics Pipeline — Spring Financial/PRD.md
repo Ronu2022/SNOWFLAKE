@@ -41,5 +41,12 @@ graph TD;
     G --> H[Upload Corrected Files to S3];
     H --> B
 
+---
+
+## 🏗️ Pipeline Workflow
+
+[aja](https://github.com/user-attachments/assets/dbfe0c69-c535-4a9c-a03e-c439e93444ce)
+
+
 
 
