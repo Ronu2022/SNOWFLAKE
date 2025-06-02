@@ -40,3 +40,7 @@ graph TD;
     F --> G[Delete Faulty Records];
     G --> H[Upload Corrected Files to S3];
     H --> B
+
+---
+![image](https://github.com/user-attachments/assets/db010668-d252-4c59-a651-0312d301fa2e)
+
