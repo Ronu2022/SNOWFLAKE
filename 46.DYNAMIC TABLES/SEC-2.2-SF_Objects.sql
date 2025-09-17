@@ -1,0 +1,7 @@
+-- SNwoflake Stage Objects.
+-- SF File FOrmats
+-- SF Sequence Objects
+-- SF Stream Objects
+-- SF Task and Task Tree
+-- Common Table Expression (CTE)
+-- SQL Window Functions
