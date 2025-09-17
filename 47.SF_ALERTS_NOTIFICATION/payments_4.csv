@@ -1,0 +1,2 @@
+payment_id,user_id,amount,currency,payment_ts,city
+P002,U1002,150.75,USD,2025-09-16 14:30:00,Delhi
