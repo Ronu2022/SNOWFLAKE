@@ -1,3 +1,17 @@
+/* There are 4 Correct files and 1 defective files:
+
+-- customer_20251023
+-- customer_20251024
+-- customer_20251025
+-- customer_20251026
+-- customer_20251027
+-- customer_20251028 (This is defective file)
+
+*/
+
+
+
+
 USE DATABASE LEARNINGS;
 CREATE OR REPLACE SCHEMA LEARNINGS.PROJECT_WORKS;
 
