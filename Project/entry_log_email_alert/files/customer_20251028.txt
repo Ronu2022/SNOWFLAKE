@@ -1,0 +1,6 @@
+CustomerID,Name,Segment,Region,CreatedDate
+C011,RAJAT,Premium,East,2025-10-28
+C012,,Gold,West,2025-10-29
+C013,SHREYA,Silver,,2025-10-30
+C014,MANISH,Gold,North,INVALID_DATE
+C015,ANJALI,Premium,South
