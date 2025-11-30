@@ -1,4 +1,4 @@
--- change context
+-- change context//
 use role sysadmin;          -- use sysadmin role
 use schema demo_db.public;  -- use default public schema
 use warehouse compute_wh;   -- use compute warehouse
